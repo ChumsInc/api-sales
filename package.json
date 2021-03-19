@@ -1,0 +1,38 @@
+{
+  "name": "api-sales",
+  "version": "1.0.0",
+  "description": "CHUMS Sales API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UtahGooner/api-sales.git"
+  },
+  "author": "Steve Montgomery",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/UtahGooner/api-sales/issues"
+  },
+  "homepage": "https://github.com/UtahGooner/api-sales#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "chums-local-modules": "github:UtahGooner/chums-local-modules#convert_to_ts",
+    "cookie-parser": "^1.4.5",
+    "date-fns": "^2.16.1",
+    "debug": "^4.3.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "formidable": "^1.2.2",
+    "helmet": "^4.3.1",
+    "jsonwebtoken": "^8.5.1",
+    "mysql2": "^2.2.5",
+    "named-placeholders": "^1.1.2",
+    "node-fetch": "^2.6.1",
+    "nodemailer": "^6.4.17",
+    "numeral": "^2.0.6",
+    "pug": "^3.0.0",
+    "sqlstring": "^2.3.2"
+  }
+}

@@ -1,0 +1,15 @@
+table.table.table-xs.table-hover.table-sticky
+    thead
+        tr
+            th Account
+            each field in fields
+                th(class="f-" + field) !{titles[field](periods)}
+
+
+    tbody
+        each row in rows
+            tr
+                td #{row['account']}
+                each field in fields
+                    td(class="f-" + field) #{row[field]}
+
