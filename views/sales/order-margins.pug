@@ -1,0 +1,55 @@
+div(style="font-family: sans-serif;")
+    h2 Order / Invoice Margin Alert (threshold #{Number(maxMargin * 100).toFixed(0)}%)
+    h3 Includes Orders and Credit Memos updated since #{!!since ? format(new Date(since), 'MM/dd hh:mm bbb') : 'N/A'}
+    div Options:
+        div Hide EDI Orders: #{filterEDI === '1' ? 'Y' : 'N'}
+        div Hide 01-PROMOS/02-SAMPLES/01-CHUMS: #{filterPromo === '1' ? 'Y' : 'N'}
+    div
+        a(href="https://intranet.chums.com/apps/order-margins/").
+            Link to full Order Margins report.
+    hr
+    table(style="font-size: small" cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th(style="padding: 0.25rem 1rem;") SO/Inv#
+                th(style="padding: 0.25rem 1rem;") Type
+                th(style="padding: 0.25rem 1rem;") Account
+                th(style="padding: 0.25rem 1rem;") Customer Name
+                th(style="padding: 0.25rem 1rem;") User
+                th(style="padding: 0.25rem 1rem;") Ship Date
+                th(style="padding: 0.25rem 1rem;text-align: right") Order Total
+                th(style="padding: 0.25rem 1rem;text-align: right") Item Total
+                th(style="padding: 0.25rem 1rem;text-align: right") Cost
+                th(style="padding: 0.25rem 1rem;text-align: right") Profit
+                th(style="padding: 0.25rem 1rem;text-align: right") Margin
+        tbody
+            for salesorder in orders
+                - shipDate = !!salesorder.ShipExpireDate ? new Date(salesorder.ShipExpireDate) : null;
+                - orderURL = `https://intranet.chums.com/reports/account/salesorder/?company=${encodeURIComponent(salesorder.Company)}&salesorderno=${encodeURIComponent(salesorder.SalesOrderNo)}&view=margins`;
+                tr
+                    td(style="padding: 0.25rem 1rem;")
+                        a(href=orderURL) #{salesorder.SalesOrderNo}
+                    th(style="padding: 0.25rem 1rem;") #{salesorder.OrderType}
+                    td(style="padding: 0.25rem 1rem;") #{salesorder.ARDivisionNo}-#{salesorder.CustomerNo}
+                    td(style="padding: 0.25rem 1rem;") #{salesorder.BillToName}
+                    td(style="padding: 0.25rem 1rem;") #{salesorder.CreatedBy}
+                    td(style="padding: 0.25rem 1rem;") #{!!shipDate ? format(shipDate, 'MM/dd') : 'N/A'}
+                    td(style="padding: 0.25rem 1rem; text-align: right") #{numeral(salesorder.OrderTotal).format('0,0.00')}
+                    td(style="padding: 0.25rem 1rem; text-align: right") #{numeral(salesorder.ItemTotal).format('0,0.00')}
+                    td(style="padding: 0.25rem 1rem;text-align: right") #{numeral(salesorder.CostTotal).format('0,0.00')}
+                    td(style="padding: 0.25rem 1rem;text-align: right") #{numeral(salesorder.Revenue).format('0,0.00')}
+                    td(style="padding: 0.25rem 1rem;text-align: right") #{numeral(salesorder.Margin * 100).format('0,0.00')}%
+            for inv in invoices
+                - shipDate = new Date(inv.InvoiceDate);
+                tr
+                    td(style="padding: 0.25rem 1rem;") #{inv.InvoiceNo}
+                    td(style="padding: 0.25rem 1rem;") #{inv.InvoiceType})
+                    td(style="padding: 0.25rem 1rem;") #{inv.ARDivisionNo}-#{inv.CustomerNo}
+                    td(style="padding: 0.25rem 1rem;") #{inv.BillToName}
+                    td(style="padding: 0.25rem 1rem;") N/A
+                    td(style="padding: 0.25rem 1rem;") #{format(shipDate, 'MM/dd')}
+                    td(style="padding: 0.25rem 1rem; text-align: right") #{numeral(inv.InvoiceTotal).format('0,0.00')}
+                    td(style="padding: 0.25rem 1rem; text-align: right") #{numeral(inv.ItemTotal).format('0,0.00')}
+                    td(style="padding: 0.25rem 1rem;text-align: right") #{numeral(inv.CostTotal).format('0,0.00')}
+                    td(style="padding: 0.25rem 1rem;text-align: right") #{numeral(inv.Revenue).format('0,0.00')}
+                    td(style="padding: 0.25rem 1rem;text-align: right") #{numeral(inv.Margin * 100).format('0,0.00')}%
