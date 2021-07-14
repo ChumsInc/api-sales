@@ -13,3 +13,7 @@ table.table.table-xs.table-hover.table-sticky
                 each field in fields
                     td(class="f-" + field) #{row[field]}
 
+
+div.debug
+    pre
+        code #{query || ''}
