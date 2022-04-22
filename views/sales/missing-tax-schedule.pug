@@ -1,0 +1,25 @@
+div(style="font-family: sans-serif;")
+    h2 Bill-To Customers missing a tax schedule.
+    h3 Includes active Bill-To Customers with B2B Access or assigned to Reps.
+    hr
+    table(style="font-size: small" cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th(style="padding: 0.25rem 1rem;") Customer Account
+                th(style="padding: 0.25rem 1rem;") Customer Name
+                th(style="padding: 0.25rem 1rem;") City, State
+                th(style="padding: 0.25rem 1rem;") Rep
+                th(style="padding: 0.25rem 1rem;") B2B User / Rep Name
+                th(style="padding: 0.25rem 1rem;") Error
+        tbody
+            for account in accounts
+                tr
+                    td(style="padding: 0.25rem 1rem;") #{account.ARDivisionNo}-#{account.CustomerNo}
+                    td(style="padding: 0.25rem 1rem;") #{account.CustomerName}
+                    td(style="padding: 0.25rem 1rem;") #{account.City}, #{account.State}
+                    td(style="padding: 0.25rem 1rem;") #{account.SalespersonDivisionNo}-#{account.SalespersonNo}
+                    td(style="padding: 0.25rem 1rem;") #{account.UserName}
+                    td(style="padding: 0.25rem 1rem;") #{account.error}
+
+    div
+        small
