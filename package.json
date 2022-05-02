@@ -1,6 +1,6 @@
 {
   "name": "api-sales",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "description": "CHUMS Sales API",
   "main": "index.js",
   "scripts": {
