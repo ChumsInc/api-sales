@@ -13,6 +13,12 @@ table.table.table-xs.table-hover.table-sticky
                 each field in fields
                     td(class="f-" + field) #{row[field]}
 
+    tfoot
+        tr
+            td Total
+            each field in fields
+                td(class="f-" + field) #{totals[field]}
+
 
 //div.debug
 //    pre
