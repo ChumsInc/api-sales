@@ -15,7 +15,7 @@ table.table.table-xs.table-hover.table-sticky
 
     tfoot
         tr
-            td Total
+            td Total (#{rows.length})
             each field in fields
                 td(class="f-" + field) #{totals[field]}
 
