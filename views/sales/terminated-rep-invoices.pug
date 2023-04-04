@@ -1,0 +1,26 @@
+div(style="font-family: sans-serif;")
+    h2 Invoices for Terminated Reps
+    hr
+    table(style="font-size: small" cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th(style="padding: 0.25rem 1rem;") Invoice No
+                th(style="padding: 0.25rem 1rem;") Customer Account
+                th(style="padding: 0.25rem 1rem;") Customer Name
+                th(style="padding: 0.25rem 1rem;") Invoice Total
+                th(style="padding: 0.25rem 1rem;") Invoice Date
+                th(style="padding: 0.25rem 1rem;") Rep
+                th(style="padding: 0.25rem 1rem;") Rep Name
+        tbody
+            for row in invoices
+                tr
+                    td(style="padding: 0.25rem 1rem;") #{row.InvoiceNo}[#{row.InvoiceType}]
+                    td(style="padding: 0.25rem 1rem;") #{row.CustomerNo}
+                    td(style="padding: 0.25rem 1rem;") #{row.BillToName}
+                    td(style="padding: 0.25rem 1rem;") #{row.InvoiceAmt}
+                    td(style="padding: 0.25rem 1rem;") #{row.InvoiceDate}
+                    td(style="padding: 0.25rem 1rem;") #{row.SalespersonNo}
+                    td(style="padding: 0.25rem 1rem;") #{row.SalespersonName}
+
+    div
+        small
