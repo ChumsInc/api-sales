@@ -7,8 +7,9 @@ div(style="font-family: sans-serif;")
                 th(style="padding: 0.25rem 1rem;") Invoice No
                 th(style="padding: 0.25rem 1rem;") Customer Account
                 th(style="padding: 0.25rem 1rem;") Customer Name
-                th(style="padding: 0.25rem 1rem;") Invoice Total
                 th(style="padding: 0.25rem 1rem;") Invoice Date
+                th(style="padding: 0.25rem 1rem;") Invoice Total
+                th(style="padding: 0.25rem 1rem;") Commission Total
                 th(style="padding: 0.25rem 1rem;") Rep
                 th(style="padding: 0.25rem 1rem;") Rep Name
         tbody
@@ -17,8 +18,9 @@ div(style="font-family: sans-serif;")
                     td(style="padding: 0.25rem 1rem;") #{row.InvoiceNo}[#{row.InvoiceType}]
                     td(style="padding: 0.25rem 1rem;") #{row.CustomerNo}
                     td(style="padding: 0.25rem 1rem;") #{row.BillToName}
-                    td(style="padding: 0.25rem 1rem;") #{row.InvoiceAmt}
                     td(style="padding: 0.25rem 1rem;") #{row.InvoiceDate}
+                    td(style="padding: 0.25rem 1rem;") #{row.InvoiceAmt}
+                    td(style="padding: 0.25rem 1rem;") #{row.CommissionAmt}
                     td(style="padding: 0.25rem 1rem;") #{row.SalespersonNo}
                     td(style="padding: 0.25rem 1rem;") #{row.SalespersonName}
 
