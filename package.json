@@ -22,7 +22,6 @@
   "dependencies": {
     "auto-changelog": "^2.4.0",
     "body-parser": "^1.19.0",
-    "camelcase": "^6.3.0",
     "chums-local-modules": "github:UtahGooner/chums-local-modules",
     "cookie-parser": "^1.4.5",
     "date-fns": "^2.16.1",
@@ -30,16 +29,10 @@
     "debug": "^4.3.1",
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
-    "formidable": "^1.2.2",
     "helmet": "^6.0.1",
-    "jsonwebtoken": "^9.0.0",
     "mysql2": "^3.2.0",
-    "named-placeholders": "^1.1.2",
-    "node-fetch": "^2.6.1",
-    "nodemailer": "^6.4.17",
     "numeral": "^2.0.6",
-    "pug": "^3.0.0",
-    "sqlstring": "^2.3.2"
+    "pug": "^3.0.0"
   },
   "auto-changelog": {
     "template": "keepachangelog",
