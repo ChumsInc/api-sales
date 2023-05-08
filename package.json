@@ -3,7 +3,9 @@
   "version": "1.2.8",
   "description": "CHUMS Sales API",
   "main": "index.js",
+  "type": "module",
   "scripts": {
+    "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "version": "auto-changelog -p && git add CHANGELOG.md"
   },
@@ -43,5 +45,13 @@
     "template": "keepachangelog",
     "unreleased": true,
     "commitLimit": false
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^2.0.0",
+    "nodemon": "^2.0.22",
+    "typescript": "^5.0.4"
+  },
+  "nodemonConfig": {
+    "delay": 1000
   }
 }
