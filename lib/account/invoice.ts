@@ -1,7 +1,24 @@
 import Debug from 'debug';
-import { apiFetch, getDBCompany, getSageCompany, mysql2Pool, validateUserAccount } from 'chums-local-modules';
+import {apiFetch, getDBCompany, getSageCompany, mysql2Pool, validateUserAccount} from 'chums-local-modules';
+import {
+    ExtendedInvoice,
+    InvoiceHistoryDetail,
+    InvoiceHistoryHeader,
+    InvoicePaymentRecord,
+    InvoiceTrackingRecord,
+    PaperlessLogRow,
+    ProductImage,
+    User
+} from 'chums-types';
+import {RowDataPacket} from "mysql2";
+import {Request, Response} from "express";
+
 const debug = Debug('chums:lib:account:invoice');
-async function loadInvoiceHistoryHeader({ Company, InvoiceNo }) {
+
+async function loadInvoiceHistoryHeader({Company, InvoiceNo}: {
+    Company: string;
+    InvoiceNo: string;
+}): Promise<InvoiceHistoryHeader | null> {
     try {
         const sql = `SELECT h.InvoiceNo,
                             h.HeaderSeqNo,
@@ -87,12 +104,11 @@ async function loadInvoiceHistoryHeader({ Company, InvoiceNo }) {
                      WHERE h.Company = :Company
                        AND h.InvoiceNo = :InvoiceNo
                        AND h.InvoiceType <> 'XD'`;
-        const args = { Company, InvoiceNo };
-        const [rows] = await mysql2Pool.query(sql, args);
+        const args = {Company, InvoiceNo};
+        const [rows] = await mysql2Pool.query<(InvoiceHistoryHeader & RowDataPacket)[]>(sql, args);
         const [invoice] = rows;
         return invoice || null;
-    }
-    catch (err) {
+    } catch (err) {
         if (err instanceof Error) {
             debug("loadInvoiceHeader()", err.message);
             return Promise.reject(err);
@@ -101,7 +117,14 @@ async function loadInvoiceHistoryHeader({ Company, InvoiceNo }) {
         return Promise.reject(new Error('Error in loadInvoiceHeader()'));
     }
 }
-async function loadInvoiceDetail({ Company, InvoiceNo, HeaderSeqNo, ARDivisionNo, CustomerNo }) {
+
+async function loadInvoiceDetail({Company, InvoiceNo, HeaderSeqNo, ARDivisionNo, CustomerNo}: {
+    Company: string;
+    InvoiceNo: string;
+    HeaderSeqNo: string;
+    ARDivisionNo: string;
+    CustomerNo: string;
+}) {
     try {
         const sql = `SELECT d.DetailSeqNo,
                             d.ItemCode,
@@ -141,7 +164,7 @@ async function loadInvoiceDetail({ Company, InvoiceNo, HeaderSeqNo, ARDivisionNo
                        AND InvoiceNo = :InvoiceNo
                        AND HeaderSeqNo = :HeaderSeqNo
                      ORDER BY DetailSeqNo`;
-        const [rows] = await mysql2Pool.query(sql, {
+        const [rows] = await mysql2Pool.query<(InvoiceHistoryDetail & RowDataPacket)[]>(sql, {
             Company,
             InvoiceNo,
             HeaderSeqNo,
@@ -164,10 +187,9 @@ async function loadInvoiceDetail({ Company, InvoiceNo, HeaderSeqNo, ARDivisionNo
                 LineDiscountPercent: Number(row.LineDiscountPercent),
                 ExtensionAmt: Number(row.ExtensionAmt),
                 image: image?.filename || null,
-            };
-        });
-    }
-    catch (err) {
+            }
+        })
+    } catch (err) {
         if (err instanceof Error) {
             debug("loadInvoiceDetail()", err.message);
             return Promise.reject(err);
@@ -176,6 +198,7 @@ async function loadInvoiceDetail({ Company, InvoiceNo, HeaderSeqNo, ARDivisionNo
         return Promise.reject(new Error('Error in loadInvoiceDetail()'));
     }
 }
+
 /**
  *
  * @param {string} Company
@@ -183,21 +206,24 @@ async function loadInvoiceDetail({ Company, InvoiceNo, HeaderSeqNo, ARDivisionNo
  * @param {string} HeaderSeqNo
  * @return {Promise<InvoiceTrackingRecord[]>}
  */
-async function loadTracking({ Company, InvoiceNo, HeaderSeqNo }) {
+async function loadTracking({Company, InvoiceNo, HeaderSeqNo}: {
+    Company: string;
+    InvoiceNo: string;
+    HeaderSeqNo: string;
+}): Promise<InvoiceTrackingRecord[]> {
     try {
         const sql = `SELECT PackageNo, TrackingID, StarshipShipVia, Weight
                      FROM c2.AR_InvoiceHistoryTracking
                      WHERE Company = :Company
                        AND InvoiceNo = :InvoiceNo
                        AND HeaderSeqNo = :HeaderSeqNo`;
-        const [rows] = await mysql2Pool.query(sql, {
+        const [rows] = await mysql2Pool.query<(InvoiceTrackingRecord & RowDataPacket)[]>(sql, {
             Company,
             InvoiceNo,
             HeaderSeqNo
         });
         return rows;
-    }
-    catch (err) {
+    } catch (err) {
         if (err instanceof Error) {
             debug("loadCommissionCorrection()", err.message);
             return Promise.reject(err);
@@ -206,7 +232,13 @@ async function loadTracking({ Company, InvoiceNo, HeaderSeqNo }) {
         return Promise.reject(new Error('Error in loadCommissionCorrection()'));
     }
 }
-async function loadPDFStatus({ Company, ARDivisionNo, CustomerNo, InvoiceNo }) {
+
+async function loadPDFStatus({Company, ARDivisionNo, CustomerNo, InvoiceNo}: {
+    Company: string;
+    ARDivisionNo: string;
+    CustomerNo: string;
+    InvoiceNo: string;
+}): Promise<PaperlessLogRow[]> {
     try {
         const sql = `SELECT Directory, Filename, DateCreated, TimeCreated, Sent
                      FROM c2.AR_CustomerPDFLog
@@ -214,15 +246,14 @@ async function loadPDFStatus({ Company, ARDivisionNo, CustomerNo, InvoiceNo }) {
                        AND ARDivisionNo = :ARDivisionNo
                        AND CustomerNo = :CustomerNo
                        AND DocumentKey = :InvoiceNo`;
-        const [rows] = await mysql2Pool.query(sql, {
+        const [rows] = await mysql2Pool.query<(PaperlessLogRow & RowDataPacket)[]>(sql, {
             Company,
             ARDivisionNo,
             CustomerNo,
             InvoiceNo
         });
         return rows;
-    }
-    catch (err) {
+    } catch (err) {
         if (err instanceof Error) {
             debug("loadPDFStatus()", err.message);
             return Promise.reject(err);
@@ -231,7 +262,9 @@ async function loadPDFStatus({ Company, ARDivisionNo, CustomerNo, InvoiceNo }) {
         return Promise.reject(new Error('Error in loadPDFStatus()'));
     }
 }
-async function loadImages(itemCodes) {
+
+
+async function loadImages(itemCodes: string[]): Promise<ProductImage[]> {
     try {
         if (itemCodes.length === 0 || !itemCodes) {
             return [];
@@ -240,10 +273,9 @@ async function loadImages(itemCodes) {
         params.append('item', itemCodes.join(','));
         const url = '/api/images/products/find/80/?' + params.toString();
         const res = await apiFetch(url);
-        const { imageList } = await res.json();
+        const {imageList} = await res.json();
         return imageList;
-    }
-    catch (err) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             console.debug("loadImages()", err.message);
             return Promise.reject(err);
@@ -252,7 +284,14 @@ async function loadImages(itemCodes) {
         return Promise.reject(new Error('Error in loadImages()'));
     }
 }
-async function loadInvoicePayments({ Company, InvoiceNo, HeaderSeqNo, ARDivisionNo, CustomerNo }) {
+
+async function loadInvoicePayments({Company, InvoiceNo, HeaderSeqNo, ARDivisionNo, CustomerNo}: {
+    Company: string;
+    InvoiceNo: string;
+    HeaderSeqNo: string;
+    ARDivisionNo: string;
+    CustomerNo: string;
+}): Promise<InvoicePaymentRecord[]> {
     try {
         const sql = `SELECT PaymentSeqNo,
                             PaymentType,
@@ -279,16 +318,15 @@ async function loadInvoicePayments({ Company, InvoiceNo, HeaderSeqNo, ARDivision
                      WHERE InvoiceNo = :InvoiceNo
                        AND ARDivisionNo = :ARDivisionNo
                        AND CustomerNo = :CustomerNo`;
-        const [rows] = await mysql2Pool.query(sql, {
+        const [rows] = await mysql2Pool.query<(InvoicePaymentRecord & RowDataPacket)[]>(sql, {
             Company,
             InvoiceNo,
             HeaderSeqNo,
             ARDivisionNo,
             CustomerNo
-        });
+        })
         return rows;
-    }
-    catch (err) {
+    } catch (err) {
         if (err instanceof Error) {
             debug("loadInvoicePayments()", err.message);
             return Promise.reject(err);
@@ -296,7 +334,9 @@ async function loadInvoicePayments({ Company, InvoiceNo, HeaderSeqNo, ARDivision
         debug("loadInvoicePayments()", err);
         return Promise.reject(new Error('Error in loadInvoicePayments()'));
     }
+
 }
+
 /**
  *
  * @param {string} Company
@@ -305,15 +345,20 @@ async function loadInvoicePayments({ Company, InvoiceNo, HeaderSeqNo, ARDivision
  * @param {boolean} includeDetail
  * @return {Promise<ExtendedInvoice>}
  */
-async function loadInvoice({ Company, InvoiceNo, user, includeDetail }) {
+async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
+    Company: string;
+    InvoiceNo: string;
+    user: User,
+    includeDetail?: boolean;
+}): Promise<ExtendedInvoice | null> {
     try {
         const sageCompany = getSageCompany(Company);
         Company = getDBCompany(Company);
-        const invoice = await loadInvoiceHistoryHeader({ Company, InvoiceNo });
+        const invoice = await loadInvoiceHistoryHeader({Company, InvoiceNo});
         if (!invoice) {
             const res = await apiFetch(`/node-sage/api/${sageCompany}/invoice/${InvoiceNo}`);
-            const { result } = await res.json();
-            return result;
+            const {result} = await res.json();
+            return result as ExtendedInvoice | null;
         }
         const validation = await validateUserAccount({
             id: user.id,
@@ -324,6 +369,7 @@ async function loadInvoice({ Company, InvoiceNo, user, includeDetail }) {
         if (!validation) {
             return Promise.reject(new Error(`User validation failed for ${invoice?.ARDivisionNo}-${invoice.CustomerNo}`));
         }
+
         const dataParams = {
             Company: Company,
             ARDivisionNo: invoice.ARDivisionNo,
@@ -333,11 +379,12 @@ async function loadInvoice({ Company, InvoiceNo, user, includeDetail }) {
             HeaderSeqNo: invoice.HeaderSeqNo,
             SalesOrderNo: invoice.SalesOrderNo,
             UserKey: invoice.UserCreatedKey,
-        };
+        }
         const paperless = await loadPDFStatus(dataParams);
         const detail = await loadInvoiceDetail(dataParams);
         const tracking = await loadTracking(dataParams);
         const payments = await loadInvoicePayments(dataParams);
+
         return {
             ...invoice,
             Paperless: paperless,
@@ -345,8 +392,7 @@ async function loadInvoice({ Company, InvoiceNo, user, includeDetail }) {
             Track: tracking,
             Payments: payments,
         };
-    }
-    catch (err) {
+    } catch (err) {
         if (err instanceof Error) {
             debug("loadInvoice()", err.message);
             return Promise.reject(err);
@@ -355,19 +401,20 @@ async function loadInvoice({ Company, InvoiceNo, user, includeDetail }) {
         return Promise.reject(new Error('Error in loadInvoice()'));
     }
 }
-export const getInvoice = async (req, res) => {
+
+export const getInvoice = async (req: Request, res: Response) => {
     try {
-        const { Company, InvoiceNo, ARDivisionNo, CustomerNo } = req.params;
-        const { user = {} } = res.locals?.profile;
-        const { images = '' } = req.query;
-        const invoice = await loadInvoice({ Company, InvoiceNo, user });
-        res.json({ invoice });
-    }
-    catch (err) {
+        const {Company, InvoiceNo, ARDivisionNo, CustomerNo} = req.params;
+
+        const {user = {}} = res.locals?.profile;
+        const {images = ''} = req.query;
+        const invoice = await loadInvoice({Company, InvoiceNo, user})
+        res.json({invoice});
+    } catch (err) {
         if (err instanceof Error) {
             debug("getInvoice()", err.message);
-            return res.json({ error: err.message, name: err.name });
+            return res.json({error: err.message, name: err.name});
         }
-        res.json({ error: 'unknown error in getInvoice' });
+        res.json({error: 'unknown error in getInvoice'});
     }
-};
+}

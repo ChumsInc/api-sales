@@ -1,6 +1,10 @@
 import Debug from 'debug';
-import { mysql2Pool } from 'chums-local-modules';
+import {mysql2Pool} from 'chums-local-modules';
+import {AccountInvoice} from 'chums-types'
+import {RowDataPacket} from "mysql2";
+
 const debug = Debug('chums:lib:account:invoices');
+
 /**
  *
  * @param {number} user_id
@@ -12,15 +16,34 @@ const debug = Debug('chums:lib:account:invoices');
  * @param {number|string} [limit]
  * @return {Promise<AccountInvoice[]>}
  */
-export async function loadAccountInvoices({ user_id, Company, ARDivisionNo, CustomerNo, year, offset = 0, limit = 1000 }) {
+export async function loadAccountInvoices({
+                                              user_id,
+                                              Company,
+                                              ARDivisionNo,
+                                              CustomerNo,
+                                              year,
+                                              offset = 0,
+                                              limit = 1000
+                                          }:{
+    user_id: number|string;
+    Company: string;
+    ARDivisionNo:string;
+    CustomerNo: string;
+    year: string;
+    offset?: number|string;
+    limit?: number|string;
+}):Promise<AccountInvoice[]> {
     limit = Number(limit) || 1000;
     offset = Number(offset) || 0;
+
     if (isNaN(offset)) {
         offset = 0;
     }
+
     if (isNaN(limit) || limit > 1000) {
         limit = 1000;
     }
+
     try {
         const sql = `
             SELECT h.Company,
@@ -56,17 +79,20 @@ export async function loadAccountInvoices({ user_id, Company, ARDivisionNo, Cust
             ORDER BY h.InvoiceDate DESC, h.InvoiceNo
             LIMIT :limit OFFSET :offset
         `;
-        const args = { Company, ARDivisionNo, CustomerNo, year, user_id: user_id, api_id: +user_id * -1, limit, offset };
-        const [rows] = await mysql2Pool.query(sql, args);
+
+        const args = {Company, ARDivisionNo, CustomerNo, year, user_id: user_id, api_id: +user_id * -1, limit, offset};
+
+        const [rows] = await mysql2Pool.query<(AccountInvoice & RowDataPacket)[]>(sql, args);
+
         rows.forEach(row => {
             row.TaxableSalesAmt = Number(row.TaxableSalesAmt || 0);
             row.NonTaxableSalesAmt = Number(row.NonTaxableSalesAmt || 0);
             row.DiscountAmt = Number(row.DiscountAmt || 0);
             row.FreightAmt = Number(row.FreightAmt || 0);
         });
+
         return rows;
-    }
-    catch (err) {
+    } catch(err:unknown) {
         if (err instanceof Error) {
             console.debug("loadAccountInvoices()", err.message);
             return Promise.reject(err);
@@ -75,7 +101,18 @@ export async function loadAccountInvoices({ user_id, Company, ARDivisionNo, Cust
         return Promise.reject(new Error('Error in loadAccountInvoices()'));
     }
 }
-export async function loadYearInvoiceCount({ user_id, Company, ARDivisionNo, CustomerNo }) {
+
+export interface YearInvoiceCount {
+    year: string;
+    invoices: number,
+}
+
+export async function loadYearInvoiceCount({user_id, Company, ARDivisionNo, CustomerNo}:{
+    user_id: number|string;
+    Company: string;
+    ARDivisionNo: string;
+    CustomerNo: string;
+}):Promise<YearInvoiceCount[]> {
     try {
         const sql = `
             SELECT YEAR(h.InvoiceDate) AS year,
@@ -95,11 +132,12 @@ export async function loadYearInvoiceCount({ user_id, Company, ARDivisionNo, Cus
             GROUP BY YEAR(h.InvoiceDate)
             ORDER BY year DESC
         `;
-        const args = { Company, ARDivisionNo, CustomerNo, user_id: user_id, api_id: +user_id * -1 };
-        const [rows] = await mysql2Pool.query(sql, args);
+
+        const args = {Company, ARDivisionNo, CustomerNo, user_id: user_id, api_id: +user_id * -1};
+
+        const [rows] = await mysql2Pool.query<(YearInvoiceCount & RowDataPacket)[]>(sql, args);
         return rows;
-    }
-    catch (err) {
+    } catch (err) {
         if (err instanceof Error) {
             debug("loadYearInvoiceCount()", err.message);
             return Promise.reject(err);
