@@ -23,6 +23,7 @@
     "auto-changelog": "^2.4.0",
     "body-parser": "^1.19.0",
     "chums-local-modules": "github:UtahGooner/chums-local-modules",
+    "chums-types": "github:UtahGooner/chums-types",
     "cookie-parser": "^1.4.5",
     "date-fns": "^2.16.1",
     "dayjs": "^1.11.7",
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.0",
+    "@types/decimal.js": "^7.4.0",
     "nodemon": "^2.0.22",
     "typescript": "^5.0.4"
   },
