@@ -15,7 +15,8 @@ import {Request, Response} from "express";
 
 const debug = Debug('chums:lib:account:invoice');
 
-async function loadInvoiceHistoryHeader({Company, InvoiceNo}: {
+async function loadInvoiceHistoryHeader({userId, Company, InvoiceNo}: {
+    userId: number|string;
     Company: string;
     InvoiceNo: string;
 }): Promise<InvoiceHistoryHeader | null> {
@@ -104,7 +105,7 @@ async function loadInvoiceHistoryHeader({Company, InvoiceNo}: {
                      WHERE h.Company = :Company
                        AND h.InvoiceNo = :InvoiceNo
                        AND h.InvoiceType <> 'XD'`;
-        const args = {Company, InvoiceNo};
+        const args = {Company, InvoiceNo, userid: userId, api_id: +userId * -1};
         const [rows] = await mysql2Pool.query<(InvoiceHistoryHeader & RowDataPacket)[]>(sql, args);
         const [invoice] = rows;
         return invoice || null;
@@ -354,8 +355,9 @@ async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
     try {
         const sageCompany = getSageCompany(Company);
         Company = getDBCompany(Company);
-        const invoice = await loadInvoiceHistoryHeader({Company, InvoiceNo});
+        const invoice = await loadInvoiceHistoryHeader({userId: user.id, Company, InvoiceNo});
         if (!invoice) {
+            debug('loadInvoice() loading from sage', InvoiceNo);
             const res = await apiFetch(`/node-sage/api/${sageCompany}/invoice/${InvoiceNo}`);
             const {result} = await res.json();
             return result as ExtendedInvoice | null;
@@ -364,7 +366,8 @@ async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
             id: user.id,
             Company,
             ARDivisionNo: invoice?.ARDivisionNo,
-            CustomerNo: invoice?.CustomerNo
+            CustomerNo: invoice?.CustomerNo,
+            ShipToCode: invoice?.ShipToCode ?? undefined,
         });
         if (!validation) {
             return Promise.reject(new Error(`User validation failed for ${invoice?.ARDivisionNo}-${invoice.CustomerNo}`));
