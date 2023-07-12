@@ -66,6 +66,10 @@ export async function getItemValidation(req:Request, res:Response) {
 export async function renderItemValidation(req:Request, res:Response) {
     try {
         const items = await loadInactiveProducts();
+        if (!items.length) {
+            res.status(304).send();
+            return;
+        }
         res.render('sales/b2b-item-validation.pug', {items});
     } catch(err) {
         if (err instanceof Error) {
