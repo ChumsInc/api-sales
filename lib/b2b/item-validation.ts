@@ -37,7 +37,7 @@ export async function loadInactiveProducts():Promise<ItemValidationRow[]> {
                        and pi.active = 1
                        and (i.ItemCode is null OR i.ProductType = 'D' OR i.InactiveItem = 'Y')
                      
-                     ORDER BY keyword
+                     ORDER BY keyword, ItemCode
         `;
         const [rows] = await mysql2Pool.query<(ItemValidationRow & RowDataPacket)[]>(sql);
         return rows;
