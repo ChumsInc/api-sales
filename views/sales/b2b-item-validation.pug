@@ -1,23 +1,23 @@
 div(style="font-family: sans-serif;")
     h2 Discontinued or Inactive B2B Items
     hr
-    table(style="font-size: small" cellpadding="3" cellspacing="0")
+    table.table.table-sm(style="font-size: small" cellpadding="3" cellspacing="0")
         thead
             tr
-                th(style="padding: 0.25rem 1rem;") Product ID
+                th.text-end(style="padding: 0.25rem 1rem;") Product ID
                 th(style="padding: 0.25rem 1rem;") Keyword
-                th(style="padding: 0.25rem 1rem;") Sell As
+                th.text-center(style="padding: 0.25rem 1rem;") Sell As
                 th(style="padding: 0.25rem 1rem;") Item Code
                 th(style="padding: 0.25rem 1rem;") Description
-                th(style="padding: 0.25rem 1rem;") Product Type
-                th(style="padding: 0.25rem 1rem;") Inactive Item
+                th.text-center(style="padding: 0.25rem 1rem;") Product Type
+                th.text-center(style="padding: 0.25rem 1rem;") Inactive Item
         tbody
             for row in items
                 tr
-                    td(style="padding: 0.25rem 1rem;") #{row.id}
+                    td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
                     td(style="padding: 0.25rem 1rem;") #{row.keyword}
-                    td(style="padding: 0.25rem 1rem;") #{row.sellAs}
+                    td.text-center(style="padding: 0.25rem 1rem;") #{row.sellAs}
                     td(style="padding: 0.25rem 1rem;") #{row.ItemCode}
                     td(style="padding: 0.25rem 1rem;") #{row.ItemCodeDesc}
-                    td(style="padding: 0.25rem 1rem;") #{row.ProductType}
-                    td(style="padding: 0.25rem 1rem;") #{row.InactiveItem}
+                    td.text-center(style="padding: 0.25rem 1rem;") #{row.ProductType}
+                    td.text-center(style="padding: 0.25rem 1rem;") #{row.InactiveItem}
