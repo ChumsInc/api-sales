@@ -6,42 +6,86 @@ import {Request, Response} from "express";
 
 const debug = Debug('chums:lib:b2b:item-validation');
 
-export async function loadInactiveProducts():Promise<ItemValidationRow[]> {
+export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
     try {
-        const sql = `SELECT p.products_id      as id,
-                            p.products_keyword as keyword,
-                            p.products_sell_as as sellAs,
-                            p.products_model   as ItemCode,
+        const sql = `SELECT p.products_id      AS id,
+                            p.products_keyword AS keyword,
+                            p.products_sell_as AS sellAs,
+                            p.products_model   AS ItemCode,
                             i.ItemCodeDesc,
                             i.ProductType,
-                            i.InactiveItem
+                            i.InactiveItem,
+                            ifnull(ia.ItemStatus, '') as ItemStatus,
+                            ifnull(vwa.QuantityAvailable, 0) as QuantityAvailable
                      FROM b2b_oscommerce.products p
                               LEFT JOIN c2.ci_item i ON i.ItemCode = p.products_model AND i.company = 'chums'
+                              LEFT JOIN c2.IM_ItemWarehouseAdditional ia
+                                        ON ia.company = i.company AND
+                                           ia.ItemCode = i.ItemCode AND
+                                           ia.WarehouseCode = '000'
+                              LEFT JOIN c2.v_web_available vwa
+                                        ON vwa.Company = i.company AND vwa.ItemCode = i.ItemCode AND
+                                           vwa.WarehouseCode = '000'
                      WHERE p.products_status = 1
-                       AND p.products_sell_as IN (1, 3)
-                       AND (i.ItemCode is null OR i.ProductType = 'D' OR i.InactiveItem = 'Y')
+                       AND p.products_sell_as = 1
+                       AND (i.ItemCode IS NULL OR i.ProductType = 'D' OR i.InactiveItem = 'Y' OR (ia.ItemStatus like 'D%' and vwa.QuantityAvailable = 0))
+                    
+                     UNION
+
+                     SELECT p.products_id      AS id,
+                            p.products_keyword AS keyword,
+                            p.products_sell_as AS sellAs,
+                            p.products_model   AS ItemCode,
+                            i.ItemCodeDesc,
+                            i.ProductType,
+                            i.InactiveItem,
+                            ifnull(ia.ItemStatus, '') as ItemStatus,
+                            ifnull(vwa.QuantityAvailable, 0) as QuantityAvailable
+                     FROM b2b_oscommerce.products p
+                              LEFT JOIN c2.ci_item i ON i.ItemCode = p.products_model AND i.company = 'chums'
+                              LEFT JOIN c2.IM_ItemWarehouseAdditional ia
+                                        ON ia.company = i.company AND
+                                           ia.ItemCode = i.ItemCode AND
+                                           ia.WarehouseCode = '000'
+                              LEFT JOIN c2.v_web_available vwa
+                                        ON vwa.Company = i.company AND vwa.ItemCode = i.ItemCode AND
+                                           vwa.WarehouseCode = '000'
+                     WHERE p.products_status = 1
+                       AND p.products_sell_as = 3
+                       AND (i.ItemCode IS NULL OR i.ProductType = 'D' OR i.InactiveItem = 'Y')
 
                      UNION
+                     
                      SELECT p.products_id,
                             p.products_keyword,
                             p.products_sell_as,
                             pi.itemCode,
                             i.ItemCodeDesc,
                             i.ProductType,
-                            i.InactiveItem
+                            i.InactiveItem,
+                            ifnull(ia.ItemStatus, '') as ItemStatus,
+                            ifnull(vwa.QuantityAvailable, 0) as QuantityAvailable
                      FROM b2b_oscommerce.products p
-                              INNER JOIN b2b_oscommerce.products_items pi on pi.productsID = p.products_id
-                              left join c2.ci_item i on i.ItemCode = pi.itemCode
-                     where p.products_sell_as = 4
-                       and p.products_status = 1
-                       and pi.active = 1
-                       and (i.ItemCode is null OR i.ProductType = 'D' OR i.InactiveItem = 'Y')
-                     
+                              INNER JOIN b2b_oscommerce.products_items pi ON pi.productsID = p.products_id
+                              LEFT JOIN c2.ci_item i ON i.ItemCode = pi.itemCode
+                              LEFT JOIN c2.IM_ItemWarehouseAdditional ia
+                                        ON ia.company = i.company AND
+                                           ia.ItemCode = i.ItemCode AND
+                                           ia.WarehouseCode = '000'
+                              LEFT JOIN c2.v_web_available vwa
+                                        ON vwa.Company = i.company AND vwa.ItemCode = i.ItemCode AND
+                                           vwa.WarehouseCode = '000'
+                     WHERE p.products_sell_as = 4
+                       AND p.products_status = 1
+                       AND pi.active = 1
+                       AND (i.ItemCode IS NULL OR i.ProductType = 'D' OR i.InactiveItem = 'Y' OR
+                            (ia.ItemStatus like 'D%' and vwa.QuantityAvailable = 0))
+
                      ORDER BY keyword, ItemCode
         `;
         const [rows] = await mysql2Pool.query<(ItemValidationRow & RowDataPacket)[]>(sql);
         return rows;
-    } catch(err) {
+    } catch (err) {
         if (err instanceof Error) {
             console.debug("loadInactiveProducts()", err.message);
             return Promise.reject(err);
@@ -51,11 +95,11 @@ export async function loadInactiveProducts():Promise<ItemValidationRow[]> {
     }
 }
 
-export async function getItemValidation(req:Request, res:Response) {
+export async function getItemValidation(req: Request, res: Response) {
     try {
         const items = await loadInactiveProducts();
         res.json({items});
-    } catch(err) {
+    } catch (err) {
         if (err instanceof Error) {
             debug("getItemValidation()", err.message);
             return res.json({error: err.message, name: err.name});
@@ -65,7 +109,7 @@ export async function getItemValidation(req:Request, res:Response) {
 }
 
 
-export async function renderItemValidation(req:Request, res:Response) {
+export async function renderItemValidation(req: Request, res: Response) {
     try {
         const items = await loadInactiveProducts();
         if (!items.length) {
@@ -73,7 +117,7 @@ export async function renderItemValidation(req:Request, res:Response) {
             return;
         }
         res.render('sales/b2b-item-validation.pug', {items});
-    } catch(err) {
+    } catch (err) {
         if (err instanceof Error) {
             debug("renderItemValidation()", err.message);
             return res.json({error: err.message, name: err.name});

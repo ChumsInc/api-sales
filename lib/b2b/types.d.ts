@@ -6,4 +6,6 @@ export interface ItemValidationRow {
     ItemCodeDesc: string|null;
     ProductType: string|null;
     InactiveItem: string|null;
+    ItemStatus: string|null;
+    QuantityAvailable: number|string|null;
 }
