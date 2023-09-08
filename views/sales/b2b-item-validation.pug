@@ -1,6 +1,7 @@
 div(style="font-family: sans-serif;")
     h2 Discontinued or Inactive B2B Items
     hr
+    a(href="https://intranet.chums.com/reports/websites/b2b/item-validation/", target="_blank") View in Chums Intranet
     table.table.table-sm.table-hover(style="font-size: small" cellpadding="3" cellspacing="0")
         thead
             tr
@@ -19,7 +20,8 @@ div(style="font-family: sans-serif;")
                     td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
                     td(style="padding: 0.25rem 1rem;") #{row.keyword}
                     td.text-center(style="padding: 0.25rem 1rem;") #{row.sellAs}
-                    td(style="padding: 0.25rem 1rem;") #{row.ItemCode}
+                    td(style="padding: 0.25rem 1rem;")
+                        a(href=`https://intranet.chums.com/apps/product-status/#/?itemCode=${row.ItemCode}`) #{row.ItemCode}
                     td(style="padding: 0.25rem 1rem;") #{row.ItemCodeDesc}
                     td.text-center(style="padding: 0.25rem 1rem;") #{row.ProductType}
                     td.text-center(style="padding: 0.25rem 1rem;") #{row.InactiveItem}

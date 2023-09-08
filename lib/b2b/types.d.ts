@@ -3,6 +3,7 @@ export interface ItemValidationRow {
     keyword: string;
     sellAs: number;
     ItemCode: string;
+    status:1|0;
     ItemCodeDesc: string|null;
     ProductType: string|null;
     InactiveItem: string|null;
