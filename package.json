@@ -11,19 +11,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/UtahGooner/api-sales.git"
+    "url": "git+https://github.com/ChumsInc/api-sales.git"
   },
   "author": "Steve Montgomery",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/UtahGooner/api-sales/issues"
+    "url": "https://github.com/ChumsInc/api-sales/issues"
   },
-  "homepage": "https://github.com/UtahGooner/api-sales#readme",
+  "homepage": "https://github.com/ChumsInc/api-sales#readme",
   "dependencies": {
     "auto-changelog": "^2.4.0",
     "body-parser": "^1.19.0",
-    "chums-local-modules": "github:UtahGooner/chums-local-modules",
-    "chums-types": "github:UtahGooner/chums-types",
+    "chums-local-modules": "github:ChumsInc/chums-local-modules",
+    "chums-types": "github:ChumsInc/chums-types",
     "cookie-parser": "^1.4.5",
     "date-fns": "^2.16.1",
     "dayjs": "^1.11.7",
