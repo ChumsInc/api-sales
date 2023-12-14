@@ -9,4 +9,5 @@ export interface ItemValidationRow {
     InactiveItem: string|null;
     ItemStatus: string|null;
     QuantityAvailable: number|string|null;
+    TotalQuantityOnHand: number|string|null;
 }

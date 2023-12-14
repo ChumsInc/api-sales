@@ -18,7 +18,8 @@ export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
                             i.ProductType,
                             i.InactiveItem,
                             IFNULL(ia.ItemStatus, '')        AS ItemStatus,
-                            IFNULL(vwa.QuantityAvailable, 0) AS QuantityAvailable
+                            IFNULL(vwa.QuantityAvailable, 0) AS QuantityAvailable,
+                            i.TotalQuantityOnHand
                      FROM b2b_oscommerce.products p
                               LEFT JOIN c2.ci_item i ON i.ItemCode = p.products_model AND i.company = 'chums'
                               LEFT JOIN c2.IM_ItemWarehouseAdditional ia
@@ -49,7 +50,8 @@ export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
                             i.ProductType,
                             i.InactiveItem,
                             IFNULL(ia.ItemStatus, '')        AS ItemStatus,
-                            IFNULL(vwa.QuantityAvailable, 0) AS QuantityAvailable
+                            IFNULL(vwa.QuantityAvailable, 0) AS QuantityAvailable,
+                            i.TotalQuantityOnHand
                      FROM b2b_oscommerce.products p
                               LEFT JOIN c2.ci_item i ON i.ItemCode = p.products_model AND i.company = 'chums'
                               LEFT JOIN c2.IM_ItemWarehouseAdditional ia
@@ -81,7 +83,8 @@ export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
                             i.ProductType,
                             i.InactiveItem,
                             IFNULL(ia.ItemStatus, '')        AS ItemStatus,
-                            IFNULL(vwa.QuantityAvailable, 0) AS QuantityAvailable
+                            IFNULL(vwa.QuantityAvailable, 0) AS QuantityAvailable,
+                            i.TotalQuantityOnHand
                      FROM b2b_oscommerce.products p
                               INNER JOIN b2b_oscommerce.products_items pi ON pi.productsID = p.products_id
                               LEFT JOIN c2.ci_item i ON i.ItemCode = pi.itemCode

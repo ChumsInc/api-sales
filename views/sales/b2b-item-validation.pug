@@ -1,3 +1,4 @@
+- var sellAs = {0: 'Off', 1: 'Self', 3: 'Mix', 4: 'Colors'}
 div(style="font-family: sans-serif;")
     h2 Discontinued or Inactive B2B Items
     hr
@@ -14,12 +15,13 @@ div(style="font-family: sans-serif;")
                 th.text-center(style="padding: 0.25rem 1rem;") Inactive Item
                 th(style="padding: 0.25rem 1rem;") Item Status
                 th.text-end(style="padding: 0.25rem 1rem;") Available
+                th.text-end(style="padding: 0.25rem 1rem;") Total On Hand
         tbody
             for row in items
                 tr(class=`${row.ProductType === 'D' || row.InactiveItem === 'Y' ? 'text-danger' : ''}`)
                     td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
                     td(style="padding: 0.25rem 1rem;") #{row.keyword}
-                    td.text-center(style="padding: 0.25rem 1rem;") #{row.sellAs}
+                    td.text-center(style="padding: 0.25rem 1rem;") #{sellAs[row.sellAs]}
                     td(style="padding: 0.25rem 1rem;")
                         a(href=`https://intranet.chums.com/apps/product-status/#/?itemCode=${row.ItemCode}`) #{row.ItemCode}
                     td(style="padding: 0.25rem 1rem;") #{row.ItemCodeDesc}
@@ -27,3 +29,4 @@ div(style="font-family: sans-serif;")
                     td.text-center(style="padding: 0.25rem 1rem;") #{row.InactiveItem}
                     td(style="padding: 0.25rem 1rem;") #{row.ItemStatus}
                     td.text-end(style="padding: 0.25rem 1rem;") #{row.QuantityAvailable}
+                    td.text-end(style="padding: 0.25rem 1rem;") #{row.TotalQuantityOnHand}
