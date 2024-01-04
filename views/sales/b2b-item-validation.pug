@@ -1,8 +1,8 @@
 - var sellAs = {0: 'Off', 1: 'Self', 3: 'Mix', 4: 'Colors'}
 div(style="font-family: sans-serif;")
-    h2 Discontinued or Inactive B2B Items
-    hr
     a(href="https://intranet.chums.com/reports/websites/b2b/item-validation/", target="_blank") View in Chums Intranet
+    hr
+    h2 Discontinued or Inactive B2B Items
     table.table.table-sm.table-hover(style="font-size: small" cellpadding="3" cellspacing="0")
         thead
             tr
@@ -20,13 +20,96 @@ div(style="font-family: sans-serif;")
             for row in items
                 tr(class=`${row.ProductType === 'D' || row.InactiveItem === 'Y' ? 'text-danger' : ''}`)
                     td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
-                    td(style="padding: 0.25rem 1rem;") #{row.keyword}
+                    td(style="padding: 0.25rem 1rem;")
+                        a(href=`https://b2b.chums.com/products/${row.keyword}`, target="_blank") #{row.keyword}
                     td.text-center(style="padding: 0.25rem 1rem;") #{sellAs[row.sellAs]}
                     td(style="padding: 0.25rem 1rem;")
-                        a(href=`https://intranet.chums.com/apps/product-status/#/?itemCode=${row.ItemCode}`) #{row.ItemCode}
+                        a(href=`https://intranet.chums.com/apps/product-status/#/?itemCode=${row.ItemCode}`, target="_blank") #{row.ItemCode}
                     td(style="padding: 0.25rem 1rem;") #{row.ItemCodeDesc}
                     td.text-center(style="padding: 0.25rem 1rem;") #{row.ProductType}
                     td.text-center(style="padding: 0.25rem 1rem;") #{row.InactiveItem}
                     td(style="padding: 0.25rem 1rem;") #{row.ItemStatus}
                     td.text-end(style="padding: 0.25rem 1rem;") #{row.QuantityAvailable}
                     td.text-end(style="padding: 0.25rem 1rem;") #{row.TotalQuantityOnHand}
+    hr
+    h2 Discontinued or Inactive B2B Images
+    table.table.table-sm.table-hover(style="font-size: small" cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th.text-end(style="padding: 0.25rem 1rem;") Product ID
+                th(style="padding: 0.25rem 1rem;") Keyword
+                th.text-center(style="padding: 0.25rem 1rem;") Sell As
+                th(style="padding: 0.25rem 1rem;") Item Code
+                th(style="padding: 0.25rem 1rem;") Item Status
+                th(style="padding: 0.25rem 1rem;") Product Image
+                th(style="padding: 0.25rem 1rem;") Default Color
+                th(style="padding: 0.25rem 1rem;") Child Item Code
+                th(style="padding: 0.25rem 1rem;") Child Color Code
+                th(style="padding: 0.25rem 1rem;") Child Status
+                th(style="padding: 0.25rem 1rem;") Child Image
+        tbody
+            for row in images
+                tr(class=`${row.ProductType === 'D' || row.InactiveItem === 'Y' ? 'text-danger' : ''}`)
+                    td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
+                    td(style="padding: 0.25rem 1rem;")
+                        a(href=`https://b2b.chums.com/products/${row.keyword}`, target="_blank") #{row.keyword}
+                    td.text-center(style="padding: 0.25rem 1rem;") #{sellAs[row.sellAs]}
+                    td(style="padding: 0.25rem 1rem;")
+                        a(href=`https://intranet.chums.com/apps/product-status/#/?itemCode=${row.ItemCode}`) #{row.ItemCode}
+                    td(style="padding: 0.25rem 1rem;") #{row.status}
+                    td(style="padding: 0.25rem 1rem;") #{row.productImage}
+                    td(style="padding: 0.25rem 1rem;") #{row.defaultColor}
+                    td(style="padding: 0.25rem 1rem;") #{row.childItemCode}
+                    td(style="padding: 0.25rem 1rem;") #{row.childColorCode}
+                    td(style="padding: 0.25rem 1rem;") #{row.childActive}
+                    td(style="padding: 0.25rem 1rem;") #{row.childImageFilename}
+    hr
+    h2 Pages with Discontinued Products
+    table.table.table-sm.table-hover(style="font-size: small" cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th.text-end(style="padding: 0.25rem 1rem;") Page ID
+                th(style="padding: 0.25rem 1rem;") Page Keyword
+                th(style="padding: 0.25rem 1rem;") Item Title
+                th(style="padding: 0.25rem 1rem;") Product Keyword
+                th(style="padding: 0.25rem 1rem;") Product Status
+                th.text-center(style="padding: 0.25rem 1rem;") Sell As
+                th(style="padding: 0.25rem 1rem;") Item Code
+        tbody
+            for row in pages
+                tr(class=`${row.ProductType === 'D' || row.InactiveItem === 'Y' ? 'text-danger' : ''}`)
+                    td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
+                    td(style="padding: 0.25rem 1rem;") #{row.pageKeyword}
+                        a(href=`https://b2b.chums.com/products/${row.pageKeyword}`, target="_blank") #{row.pageKeyword}
+                    td(style="padding: 0.25rem 1rem;") #{row.itemTitle}
+                    td(style="padding: 0.25rem 1rem;") #{row.productKeyword}
+                        a(href=`https://b2b.chums.com/products/${row.pageKeyword}/${row.productKeyword}`, target="_blank") #{row.productKeyword}
+                    td(style="padding: 0.25rem 1rem;") #{row.productStatus}
+                    td.text-center(style="padding: 0.25rem 1rem;") #{sellAs[row.sellAs]}
+                    td(style="padding: 0.25rem 1rem;")
+                        a(href=`https://intranet.chums.com/apps/product-status/#/?itemCode=${row.itemCode}`) #{row.itemCode}
+    hr
+    h2 Products with Inactive Pages
+    table.table.table-sm.table-hover(style="font-size: small" cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th.text-end(style="padding: 0.25rem 1rem;") Product ID
+                th(style="padding: 0.25rem 1rem;") Product Keyword
+                th(style="padding: 0.25rem 1rem;") Item Code
+                th.text-center(style="padding: 0.25rem 1rem;") Sell As
+                th(style="padding: 0.25rem 1rem;") Page Keyword
+                th(style="padding: 0.25rem 1rem;") Page Status
+                th(style="padding: 0.25rem 1rem;") Page Item Status
+        tbody
+            for row in productCategories
+                tr(class=`${row.ProductType === 'D' || row.InactiveItem === 'Y' ? 'text-danger' : ''}`)
+                    td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
+                    td(style="padding: 0.25rem 1rem;")
+                        a(href=`https://b2b.chums.com/products/${row.pageKeyword}/${row.keyword}`, target="_blank") #{row.keyword}
+                    td(style="padding: 0.25rem 1rem;") #{row.ItemCode}
+                    td.text-center(style="padding: 0.25rem 1rem;") #{sellAs[row.sellAs]}
+                    td(style="padding: 0.25rem 1rem;")
+                        a(href=`https://b2b.chums.com/products/${row.pageKeyword}`, target="_blank") #{row.pageKeyword}
+                    td(style="padding: 0.25rem 1rem;") #{row.pageStatus}
+                    td(style="padding: 0.25rem 1rem;") #{row.pageItemStatus}
+    hr
