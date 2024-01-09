@@ -19,7 +19,8 @@ div(style="font-family: sans-serif;")
         tbody
             for row in items
                 tr(class=`${row.ProductType === 'D' || row.InactiveItem === 'Y' ? 'text-danger' : ''}`)
-                    td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
+                    td.text-end(style="padding: 0.25rem 1rem;")
+                        a(href=`https://intranet.chums.com/apps/b2b-products/#/products/${row.keyword}`, target="b2b-products") #{row.id}
                     td(style="padding: 0.25rem 1rem;")
                         a(href=`https://b2b.chums.com/products/${row.keyword}`, target="_blank") #{row.keyword}
                     td.text-center(style="padding: 0.25rem 1rem;") #{sellAs[row.sellAs]}
@@ -50,7 +51,8 @@ div(style="font-family: sans-serif;")
         tbody
             for row in images
                 tr(class=`${row.ProductType === 'D' || row.InactiveItem === 'Y' ? 'text-danger' : ''}`)
-                    td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
+                    td.text-end(style="padding: 0.25rem 1rem;")
+                        a(href=`https://intranet.chums.com/apps/b2b-products/#/products/${row.keyword}`, target="b2b-products") #{row.id}
                     td(style="padding: 0.25rem 1rem;")
                         a(href=`https://b2b.chums.com/products/${row.keyword}`, target="_blank") #{row.keyword}
                     td.text-center(style="padding: 0.25rem 1rem;") #{sellAs[row.sellAs]}
@@ -103,7 +105,8 @@ div(style="font-family: sans-serif;")
         tbody
             for row in productCategories
                 tr(class=`${row.ProductType === 'D' || row.InactiveItem === 'Y' ? 'text-danger' : ''}`)
-                    td.text-end(style="padding: 0.25rem 1rem;") #{row.id}
+                    td.text-end(style="padding: 0.25rem 1rem;")
+                        a(href=`https://intranet.chums.com/apps/b2b-products/#/products/${row.keyword}`, target="b2b-products") #{row.id}
                     td(style="padding: 0.25rem 1rem;")
                         a(href=`https://b2b.chums.com/products/${row.pageKeyword}/${row.keyword}`, target="_blank") #{row.keyword}
                     td(style="padding: 0.25rem 1rem;") #{row.ItemCode}
@@ -112,4 +115,30 @@ div(style="font-family: sans-serif;")
                         a(href=`https://b2b.chums.com/products/${row.pageKeyword}`, target="_blank") #{row.pageKeyword}
                     td(style="padding: 0.25rem 1rem;") #{row.pageStatus}
                     td(style="padding: 0.25rem 1rem;") #{row.pageItemStatus}
+    hr
+    h2 Products with Invalid Mixes
+    table.table.table-sm.table-hover(style="font-size: small" cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th.text-end(style="padding: 0.25rem 1rem;") Product ID
+                th(style="padding: 0.25rem 1rem;") Product Keyword
+                th(style="padding: 0.25rem 1rem;") Item Code
+                th(style="padding: 0.25rem 1rem;") Name
+                th(style="padding: 0.25rem 1rem;") Mix Component
+                th(style="padding: 0.25rem 1rem;") BOM Component
+                th.text-end(style="padding: 0.25rem 1rem;") Mix Qty
+                th.text-end(style="padding: 0.25rem 1rem;") BOM Qty
+        tbody
+            for row in mixes
+                tr(class=`${row.ProductType === 'D' || row.InactiveItem === 'Y' ? 'text-danger' : ''}`)
+                    td.text-end(style="padding: 0.25rem 1rem;")
+                        a(href=`https://intranet.chums.com/apps/b2b-products/#/products/${row.keyword}`, target="b2b-products") #{row.productId}
+                    td(style="padding: 0.25rem 1rem;")
+                        a(href=`https://b2b.chums.com/products/${row.keyword}`, target="b2b") #{row.keyword}
+                    td(style="padding: 0.25rem 1rem;") #{row.ItemCode}
+                    td(style="padding: 0.25rem 1rem;") #{row.name}
+                    td(style="padding: 0.25rem 1rem;") #{row.ComponentItemCode}
+                    td(style="padding: 0.25rem 1rem;") #{row.BillComponentItemCode}
+                    td.text-end(style="padding: 0.25rem 1rem;") #{row.itemQuantity}
+                    td.text-end(style="padding: 0.25rem 1rem;") #{row.QuantityPerBill}
     hr

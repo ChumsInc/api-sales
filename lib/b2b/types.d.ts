@@ -47,3 +47,18 @@ export interface ProductCategoryPageValidationRow {
     pageStatus: number|null;
     pageItemStatus: number|null;
 }
+
+export interface ProductMixValidationRow {
+    productId: number;
+    keyword: string;
+    ItemCode: string;
+    name: string|null;
+    mixId: number;
+    MixItemCode: string;
+    ComponentItemCode: string|null;
+    BillComponentItemCode: string|null;
+    itemQuantity: string|number|null;
+    QuantityPerBill: string|number|null;
+    color_code: string|null;
+    color_name: string|null;
+}

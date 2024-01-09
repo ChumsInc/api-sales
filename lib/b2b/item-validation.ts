@@ -4,7 +4,8 @@ import {
     CategoryPageValidationRow,
     ItemImageValidationRow,
     ItemValidationRow,
-    ProductCategoryPageValidationRow
+    ProductCategoryPageValidationRow,
+    ProductMixValidationRow
 } from "./types.js";
 import {RowDataPacket} from "mysql2";
 import {Request, Response} from "express";
@@ -281,13 +282,106 @@ export async function loadProductCategoryValidation(): Promise<ProductCategoryPa
     }
 }
 
+export async function loadBillDetailValidation(): Promise<ProductMixValidationRow[]> {
+    try {
+        const sql = `SELECT p.products_id      AS productId,
+                            p.products_model   AS ItemCode,
+                            p.products_keyword AS keyword,
+                            pd.products_name   AS name,
+                            m.mixID,
+                            bh.BillNo          AS MixItemCode,
+                            NULL               AS ComponentItemCode,
+                            NULL               AS BillComponentItemCode,
+                            NULL               AS itemQuantity,
+                            NULL               AS QuantityPerBill,
+                            NULL               AS color_code,
+                            NULL               AS color_name
+                     FROM b2b_oscommerce.products p
+                              INNER JOIN b2b_oscommerce.products_description pd ON pd.products_id = p.products_id
+                              INNER JOIN b2b_oscommerce.products_mixes m ON m.productsID = p.products_id
+                              LEFT JOIN c2.BM_BillHeader bh ON bh.Company = 'chums' AND bh.BillNo = m.itemCode
+                     WHERE p.products_status = 1
+                       AND (p.products_model <> m.itemCode OR p.products_sell_as <> 3 OR
+                            m.active <> p.products_status OR bh.BillNo IS NULL)
+
+                     UNION
+
+                     SELECT p.products_id,
+                            p.products_model,
+                            p.products_keyword,
+                            pd.products_name,
+                            m.mixID,
+                            bh.BillNo,
+                            md.itemCode,
+                            bd.ComponentItemCode,
+                            md.itemQuantity,
+                            ROUND(bd.QuantityPerBill * i.SalesUMConvFctr, 1) AS QuantityPerBill,
+                            c.color_code,
+                            color_name
+                     FROM b2b_oscommerce.products p
+                              INNER JOIN b2b_oscommerce.products_description pd ON pd.products_id = p.products_id
+
+                              INNER JOIN b2b_oscommerce.products_mixes m ON m.productsID = p.products_id
+                              INNER JOIN b2b_oscommerce.products_mixes_detail md ON m.mixID = md.mixID
+                              LEFT JOIN b2b_oscommerce.colors c ON c.colors_id = md.colorsID
+                              LEFT JOIN c2.ci_item i ON i.company = 'chums' AND i.ItemCode = m.itemCode
+                              LEFT JOIN c2.BM_BillHeader bh ON bh.Company = i.company AND bh.BillNo = i.itemCode
+                              LEFT JOIN c2.BM_BillDetail bd
+                                        ON bd.Company = bh.Company AND
+                                           bd.BillNo = bh.BillNo AND
+                                           bd.ComponentItemCode = md.itemCode
+                     WHERE p.products_status = 1
+                       AND IFNULL(md.itemCode, '') <> IFNULL(bd.ComponentItemCode, '')
+
+
+                     UNION
+
+                     SELECT p.products_id,
+                            p.products_model,
+                            p.products_keyword,
+                            pd.products_name,
+                            m.mixID,
+                            bh.BillNo,
+                            md.itemCode,
+                            bd.ComponentItemCode,
+                            md.itemQuantity,
+                            ROUND(bd.QuantityPerBill * i.SalesUMConvFctr, 1) AS QuantityPerBill,
+                            c.color_code,
+                            color_name
+                     FROM b2b_oscommerce.products p
+                              INNER JOIN b2b_oscommerce.products_description pd ON pd.products_id = p.products_id
+                              INNER JOIN b2b_oscommerce.products_mixes m ON m.productsID = p.products_id
+                              INNER JOIN b2b_oscommerce.products_mixes_detail md ON m.mixID = md.mixID
+                              LEFT JOIN b2b_oscommerce.colors c ON c.colors_id = md.colorsID
+                              LEFT JOIN c2.ci_item i ON i.company = 'chums' AND i.ItemCode = m.itemCode
+                              LEFT JOIN c2.BM_BillHeader bh ON bh.Company = i.company AND bh.BillNo = i.itemCode
+                              LEFT JOIN c2.BM_BillDetail bd
+                                        ON bd.Company = bh.Company AND bd.BillNo = bh.BillNo AND
+                                           bd.ComponentItemCode = md.itemCode
+                     WHERE p.products_status = 1
+                       AND md.itemQuantity <> ROUND(bd.QuantityPerBill * i.SalesUMConvFctr, 1)
+
+                     ORDER BY ItemCode, componentItemCode`;
+        const [rows] = await mysql2Pool.query<(ProductMixValidationRow & RowDataPacket)[]>(sql);
+        return rows;
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            console.debug("loadBillDetailValidation()", err.message);
+            return Promise.reject(err);
+        }
+        console.debug("loadBillDetailValidation()", err);
+        return Promise.reject(new Error('Error in loadBillDetailValidation()'));
+    }
+}
+
 export async function getItemValidation(req: Request, res: Response) {
     try {
         const items = await loadInactiveProducts();
         const images = await loadInactiveProductImages();
         const pages = await loadCategoryProductValidation();
         const productCategories = await loadProductCategoryValidation();
-        res.json({items, images, pages, productCategories});
+        const mixes = await loadBillDetailValidation();
+        res.json({items, images, pages, productCategories, mixes});
     } catch (err) {
         if (err instanceof Error) {
             debug("getItemValidation()", err.message);
@@ -304,7 +398,9 @@ export async function renderItemValidation(req: Request, res: Response) {
         const images = await loadInactiveProductImages();
         const pages = await loadCategoryProductValidation();
         const productCategories = await loadProductCategoryValidation();
-        if (!items.length && !images.length && !pages.length && !productCategories.length) {
+        const mixes = [] as ProductMixValidationRow[]; //await loadBillDetailValidation();
+        const errors = items.length + images.length + pages.length + productCategories.length + mixes.length;
+        if (!errors) {
             res.status(304).send();
             return;
         }
@@ -317,6 +413,7 @@ export async function renderItemValidation(req: Request, res: Response) {
             images,
             pages,
             productCategories,
+            mixes,
         });
     } catch (err) {
         if (err instanceof Error) {
