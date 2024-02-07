@@ -1,3 +1,5 @@
+import {ExtendedInvoice, ProductImage} from "chums-types";
+
 export interface AccountInvoice {
     Company: string,
     InvoiceNo: string,
@@ -16,4 +18,12 @@ export interface AccountInvoice {
     NonTaxableSalesAmt: number,
     DiscountAmt: number,
     FreightAmt: number
+}
+
+export interface ImageListResponse {
+    imageList?: ProductImage[]
+}
+
+export interface ExtendedInvoiceResponse {
+    result: ExtendedInvoice|null;
 }

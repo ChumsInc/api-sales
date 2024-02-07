@@ -12,6 +12,7 @@ import {
 } from 'chums-types';
 import {RowDataPacket} from "mysql2";
 import {Request, Response} from "express";
+import {ExtendedInvoiceResponse, ImageListResponse} from "./types.js";
 
 const debug = Debug('chums:lib:account:invoice');
 
@@ -274,8 +275,8 @@ async function loadImages(itemCodes: string[]): Promise<ProductImage[]> {
         params.append('item', itemCodes.join(','));
         const url = '/api/images/products/find/80/?' + params.toString();
         const res = await apiFetch(url);
-        const {imageList} = await res.json();
-        return imageList;
+        const json = await res.json() as ImageListResponse;
+        return json?.imageList ?? [];
     } catch (err: unknown) {
         if (err instanceof Error) {
             console.debug("loadImages()", err.message);
@@ -343,7 +344,7 @@ async function loadInvoicePayments({Company, InvoiceNo, HeaderSeqNo, ARDivisionN
  * @param {string} Company
  * @param {string} InvoiceNo
  * @param {string} user
- * @param {boolean} includeDetail
+ * @param {boolean} [includeDetail]
  * @return {Promise<ExtendedInvoice>}
  */
 async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
@@ -359,8 +360,8 @@ async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
         if (!invoice) {
             debug('loadInvoice() loading from sage', InvoiceNo);
             const res = await apiFetch(`/node-sage/api/${sageCompany}/invoice/${InvoiceNo}`);
-            const {result} = await res.json();
-            return result as ExtendedInvoice | null;
+            const json = await res.json() as ExtendedInvoiceResponse;
+            return json.result;
         }
         const validation = await validateUserAccount({
             id: user.id,
