@@ -2,6 +2,8 @@ div(style="font-family: sans-serif;")
     h2 Bill-To Customers missing a tax schedule.
     h3 Includes active Bill-To Customers with B2B Access or assigned to Reps.
     hr
+    div(style="margin-top: 1rem; margin-bottom: 1rem;")
+        a(href="https://intranet.chums.com/reports/cs/missing-tax-schedule/") See on Chums Intranet.
     table(style="font-size: small" cellpadding="3" cellspacing="0")
         thead
             tr
@@ -14,7 +16,7 @@ div(style="font-family: sans-serif;")
         tbody
             for account in accounts
                 tr
-                    td(style="padding: 0.25rem 1rem;") #{account.ARDivisionNo}-#{account.CustomerNo}
+                    td(style="padding: 0.25rem 1rem;") #{account.ARDivisionNo}-#{account.CustomerNo}#{!!account.ShipToCode ? '/' + account.ShipToCode : ''}
                     td(style="padding: 0.25rem 1rem;") #{account.CustomerName}
                     td(style="padding: 0.25rem 1rem;") #{account.City}, #{account.State}
                     td(style="padding: 0.25rem 1rem;") #{account.SalespersonDivisionNo}-#{account.SalespersonNo}
