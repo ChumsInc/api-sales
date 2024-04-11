@@ -1,0 +1,32 @@
+div(style="font-family: sans-serif;")
+    h2 Orders for Reps that don't match Customer Rep
+    hr
+    table(style="font-size: small" cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th(style="padding: 0.25rem 1rem") Customer
+                th(style="padding: 0.25rem 1rem") Customer Name
+                th(style="padding: 0.25rem 1rem") Customer Rep
+                th(style="padding: 0.25rem 1rem") Customer Rep Name
+                th(style="padding: 0.25rem 1rem;") Sales Order No
+                th(style="padding: 0.25rem 1rem;") Order Date
+                th(style="padding: 0.25rem 1rem;") Ship Date
+                th(style="padding: 0.25rem 1rem;") Order Rep
+                th(style="padding: 0.25rem 1rem;") Order Rep Name
+        tbody
+            for row in orders
+                tr
+                    td(style="padding: 0.25rem 1rem;") #{row.ARDivisionNo}-#{row.CustomerNo}
+                    td(style="padding: 0.25rem 1rem;") #{row.CustomerName}
+                    td(style="padding: 0.25rem 1rem;") #{row.customerRep}
+                    td(style="padding: 0.25rem 1rem;") #{row.SalespersonName}
+                    td(style="padding: 0.25rem 1rem;") #{row.SalesOrderNo}
+                    td(style="padding: 0.25rem 1rem;") #{row.OrderDate}
+                    td(style="padding: 0.25rem 1rem;") #{row.ShipExpireDate}
+                    td(style="padding: 0.25rem 1rem;") #{row.SalesOrderRep}
+                    td(style="padding: 0.25rem 1rem;") #{row.SalesOrderRepName}
+
+    hr
+
+    div
+        small Excluded are orders for Rep numbers 'H00', 'H01', 'H04', 'H00E', 'H00W', 'TEST', '0000'.
