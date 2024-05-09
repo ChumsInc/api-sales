@@ -400,7 +400,7 @@ export async function renderItemValidation(req: Request, res: Response) {
         const mixes = [] as ProductMixValidationRow[]; //await loadBillDetailValidation();
         const errors = items.length + images.length + pages.length + productCategories.length + mixes.length;
         if (!errors) {
-            res.status(304).send();
+            res.status(204).send();
             return;
         }
 
