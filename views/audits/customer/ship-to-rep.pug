@@ -1,0 +1,26 @@
+div(style="font-family: sans-serif;")
+    h2 Customers with Mismatching Ship-To Rep
+    a(href="https://intranet.chums.com/reports/cs/customer-ship-to-rep/", target="_blank", class="visually-hidden") View in Chums Intranet
+    hr
+    table.table.table-sm.table-hover(style="font-size: small" cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th(style="padding: 0.25rem 1rem;") Customer Account
+                th(style="padding: 0.25rem 1rem;") Customer Name
+                th(style="padding: 0.25rem 1rem;") Bill-To Rep
+                th(style="padding: 0.25rem 1rem;") Bill-To Rep Name
+                th(style="padding: 0.25rem 1rem;") Ship-To Code
+                th(style="padding: 0.25rem 1rem;") Ship-To Name
+                th(style="padding: 0.25rem 1rem;") Ship-To Rep
+                th(style="padding: 0.25rem 1rem;") Ship-To Rep Name
+        tbody
+            for row in rows
+                tr
+                    th(style="padding: 0.25rem 1rem;") #{row.ARDivisionNo}-#{row.CustomerNo}
+                    th(style="padding: 0.25rem 1rem;") #{row.CustomerName}
+                    th(style="padding: 0.25rem 1rem;") #{row.Salesperson.SalespersonDivisionNo}-#{row.Salesperson.SalespersonNo}
+                    th(style="padding: 0.25rem 1rem;") #{row.Salesperson.SalespersonName}
+                    th(style="padding: 0.25rem 1rem;") #{row.ShipToAddress.ShipToCode}
+                    th(style="padding: 0.25rem 1rem;") #{row.ShipToAddress.ShipToName}
+                    th(style="padding: 0.25rem 1rem;") #{row.ShipToAddress.Salesperson.SalespersonDivisionNo}-#{row.ShipToAddress.Salesperson.SalespersonNo}
+                    th(style="padding: 0.25rem 1rem;") #{row.ShipToAddress.Salesperson.SalespersonName}
