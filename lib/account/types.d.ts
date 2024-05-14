@@ -21,9 +21,9 @@ export interface AccountInvoice {
 }
 
 export interface ImageListResponse {
-    imageList?: ProductImage[];
+    imageList?: ProductImage[]
 }
 
 export interface ExtendedInvoiceResponse {
-    result?: ExtendedInvoice;
+    result: ExtendedInvoice|null;
 }

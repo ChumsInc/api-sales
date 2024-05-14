@@ -54,7 +54,7 @@ export async function loadRepAging(args: LoadRepAgingArgs):Promise<RepAgingTotal
               AND a.primaryAccount = 1
               GROUP BY s.SalespersonDivisionNo, s.SalespersonNo
         `;
-        debug('loadRepAging()', args);
+        // debug('loadRepAging()', args);
         const [rows] = await mysql2Pool.query<(RepAgingTotal & RowDataPacket)[]>(sql, args);
         return rows.map(row => ({
             ...row,

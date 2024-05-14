@@ -1,6 +1,6 @@
 {
   "name": "api-sales",
-  "version": "1.4.5",
+  "version": "1.4.7",
   "description": "CHUMS Sales API",
   "main": "index.js",
   "type": "module",
@@ -25,7 +25,7 @@
     "chums-local-modules": "github:ChumsInc/chums-local-modules",
     "chums-types": "github:ChumsInc/chums-types",
     "cookie-parser": "^1.4.5",
-    "date-fns": "^2.16.1",
+    "date-fns": "^3.6.0",
     "dayjs": "^1.11.7",
     "debug": "^4.3.1",
     "decimal.js": "^10.4.3",
