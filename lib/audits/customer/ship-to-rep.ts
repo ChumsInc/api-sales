@@ -54,6 +54,7 @@ export interface ShipToAuditRow {
 export interface ShipToRepAuditOptions {
     excludeUnassigned?: boolean;
     excludeHouse?: boolean;
+    excludeSupervisor?: boolean;
 }
 
 function sageDateToString(arg: SageTime): string | null {
@@ -107,8 +108,10 @@ async function loadShipToAudit(options: ShipToRepAuditOptions): Promise<ShipToRe
                                            sr.SalespersonNo = s.SalespersonNo
                      WHERE NOT (sr.SalespersonDivisionNo = br.SalespersonDivisionNo AND
                                 sr.SalespersonNo = br.SalespersonNo)
-                       AND NOT (sr.SalesManagerDivisionNo = br.SalespersonDivisionNo AND
-                                sr.SalesManagerNo = br.SalespersonNo)
+                       AND IF(:excludeSupervisor, NOT ((sr.SalesManagerDivisionNo = br.SalespersonDivisionNo AND
+                             sr.SalesManagerNo = br.SalespersonNo) OR
+                            (br.SalesManagerDivisionNo = sr.SalespersonDivisionNo AND
+                             br.SalesManagerNo = sr.SalespersonNo)), 1)
                        AND IF(:excludeUnassigned, c.SalespersonNo <> '0000', 1)
                        AND IF(:excludeHouse, c.SalespersonNo NOT IN ('H00', 'H00E', 'H00W', 'H04', 'R00'), 1)
                        AND NOT (c.ARDivisionNo = '01' AND c.CustomerNo = 'TEST')
@@ -116,6 +119,7 @@ async function loadShipToAudit(options: ShipToRepAuditOptions): Promise<ShipToRe
         const params = {
             excludeUnassigned: options.excludeUnassigned ? 1 : 0,
             excludeHouse: options.excludeHouse ? 1 : 0,
+            excludeSupervisor: options.excludeSupervisor ? 1 : 0,
         }
         const [rows] = await mysql2Pool.query<(RowDataPacket & ShipToAuditRow)[]>(sql, params);
         return rows.map(row => {
@@ -145,6 +149,7 @@ export const getCustomerShipToAudit = async (req: Request, res: Response) => {
         const options: ShipToRepAuditOptions = {
             excludeUnassigned: req.query.excludeUnassigned === '1',
             excludeHouse: req.query.excludeHouse === '1',
+            excludeSupervisor: req.query.excludeSupervisor === '1',
         }
         debug('renderCustomerShipToAudit()', options);
         const rows = await loadShipToAudit(options);
