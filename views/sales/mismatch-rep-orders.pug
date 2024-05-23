@@ -1,6 +1,8 @@
 div(style="font-family: sans-serif;")
     h2 Orders for Reps that don't match Customer Rep
     hr
+    a(href="https://intranet.chums.com/reports/audit/sales-orders/rep-mismatch/") View on Chums Intranet
+    hr
     table(style="font-size: small" cellpadding="3" cellspacing="0")
         thead
             tr
@@ -16,9 +18,9 @@ div(style="font-family: sans-serif;")
         tbody
             for row in orders
                 tr
-                    td(style="padding: 0.25rem 1rem;") #{row.ARDivisionNo}-#{row.CustomerNo}
-                    td(style="padding: 0.25rem 1rem;") #{row.CustomerName}
-                    td(style="padding: 0.25rem 1rem;") #{row.customerRep}
+                    td(style="padding: 0.25rem 1rem;") #{row.ARDivisionNo}-#{row.CustomerNo}#{(!!row.ShipToCode ? '/' + row.ShipToCode : '')}
+                    td(style="padding: 0.25rem 1rem; white-space: pre;") #{row.CustomerName}#{(!!row.ShipToName ? "\n" + row.ShipToName : '')}
+                    td(style="padding: 0.25rem 1rem;") #{row.CustomerRep}
                     td(style="padding: 0.25rem 1rem;") #{row.SalespersonName}
                     td(style="padding: 0.25rem 1rem;") #{row.SalesOrderNo}
                     td(style="padding: 0.25rem 1rem;") #{row.OrderDate}
