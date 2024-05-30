@@ -165,10 +165,10 @@ export const getCustomerShipToAudit = async (req: Request, res: Response) => {
 
 export const renderCustomerShipToAudit = async (req: Request, res: Response) => {
     try {
-        debug('renderCustomerShipToAudit()', req.query);
         const options: ShipToRepAuditOptions = {
             excludeUnassigned: req.query.excludeUnassigned === '1',
             excludeHouse: req.query.excludeHouse === '1',
+            excludeSupervisor: req.query.excludeSupervisor === '1',
         }
         const rows = await loadShipToAudit(options);
         return res.render('audits/customer/ship-to-rep.pug', {rows})
