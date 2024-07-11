@@ -62,3 +62,46 @@ export interface ProductMixValidationRow {
     color_code: string|null;
     color_name: string|null;
 }
+
+
+export interface B2BHistoryUser {
+    userId: number;
+    email: string;
+    name: string;
+    userType: number;
+}
+
+export interface B2BHistoryUserAction {
+    userId: number;
+    action: string;
+}
+
+export interface B2BHistoryAction {
+    action: string;
+    CartName?: string;
+    SalesOrderNo: string;
+    ItemCode: string;
+    QuantityOrdered: string|number;
+    Comment: string|null;
+    promo_code?: string;
+    versionNo?: string;
+    referrer?: string;
+}
+
+export interface B2BHistoryOrder {
+    SalesOrderNo: string;
+    OrderStatus: string;
+    ARDivisionNo: string;
+    CustomerNo: string;
+    ShipToCode: string|null;
+    BillToName: string;
+    ShipToName: string;
+    OrderDate: string;
+    PromotedDate: string|null;
+    ShipExpireDate: string;
+    LastInvoiceDate: string|null;
+    OrderTotal:number|string;
+    users: B2BHistoryUser[];
+    userActions: B2BHistoryUserAction[];
+    actions: B2BHistoryAction[]
+}
