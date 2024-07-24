@@ -68,6 +68,7 @@ export interface B2BHistoryUser {
     userId: number;
     email: string;
     name: string;
+    company: string;
     userType: number;
 }
 
@@ -96,6 +97,9 @@ export interface B2BHistoryOrder {
     ShipToCode: string|null;
     BillToName: string;
     ShipToName: string;
+    SalespersonDivisionNo: string;
+    SalespersonNo: string;
+    SalespersonName: string|null;
     OrderDate: string;
     PromotedDate: string|null;
     ShipExpireDate: string;
@@ -103,5 +107,4 @@ export interface B2BHistoryOrder {
     OrderTotal:number|string;
     users: B2BHistoryUser[];
     userActions: B2BHistoryUserAction[];
-    actions: B2BHistoryAction[]
 }

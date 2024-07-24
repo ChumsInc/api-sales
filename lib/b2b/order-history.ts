@@ -30,14 +30,16 @@ async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHist
                             sohh.ShipToCode,
                             sohh.BillToName,
                             sohh.ShipToName,
+                            sohh.SalespersonDivisionNo,
+                            sohh.SalespersonNo,
+                            rep.SalespersonName,
                             sohh.OrderDate,
                             sohh.PromotedDate,
                             sohh.ShipExpireDate,
                             sohh.LastInvoiceDate,
                             (sohh.TaxableAmt + sohh.NonTaxableAmt - sohh.DiscountAmt) AS OrderTotal,
                             b2bh.users,
-                            b2bh.userActions,
-                            b2bh.actions
+                            b2bh.userActions
                      FROM c2.SO_SalesOrderHistoryHeader sohh
                               INNER JOIN (SELECT bh.dbCompany     AS Company,
                                                  bh.SalesOrderNo,
@@ -52,11 +54,9 @@ async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHist
                                                                        'userId', u.id,
                                                                        'email', u.email,
                                                                        'name', u.name,
+                                                                       'company', u.company,
                                                                        'userType', u.accountType
-                                                               )) AS users,
-                                                 JSON_ARRAYAGG(
-                                                         JSON_QUERY(action, '$.post') ORDER BY bh.original_timestamp
-                                                 )                AS actions
+                                                               )) AS users
                                           FROM b2b.SalesOrderHistory bh
                                                    INNER JOIN users.users u ON u.id = bh.UserID
                                           WHERE bh.dbCompany = 'chums'
@@ -64,6 +64,10 @@ async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHist
                                             AND (IFNULL(:userId, 0) = 0 OR u.id = :userId)
                                           GROUP BY dbCompany, SalesOrderNo) b2bh
                                          ON b2bh.Company = sohh.Company AND b2bh.SalesOrderNo = sohh.SalesOrderNo
+                              LEFT JOIN c2.ar_salesperson rep ON rep.Company = sohh.Company AND
+                                                                 rep.SalespersonDivisionNo =
+                                                                 sohh.SalespersonDivisionNo AND
+                                                                 rep.SalespersonNo = sohh.SalespersonNo
                      WHERE sohh.Company = 'chums'
                        AND sohh.OrderStatus NOT IN ('X', 'Z')
                        AND (IFNULL(:arDivisionNo, '') = '' OR sohh.ARDivisionNo = :arDivisionNo)
@@ -80,8 +84,7 @@ async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHist
             return {
                 ...row,
                 users: JSON.parse(row.users ?? '[]'),
-                userActions: JSON.parse(row.userActions ?? '[]'),
-                actions: JSON.parse(row.actions ?? '[]'),
+                userActions: JSON.parse(row.userActions ?? '[]')
             }
         })
     } catch (err: unknown) {
