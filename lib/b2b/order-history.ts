@@ -89,10 +89,10 @@ async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHist
         })
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadOrderHistory()", err.message);
+            debug("loadOrderHistory()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadOrderHistory()", err);
+        debug("loadOrderHistory()", err);
         return Promise.reject(new Error('Error in loadOrderHistory()'));
     }
 }

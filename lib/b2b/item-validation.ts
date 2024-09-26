@@ -112,10 +112,10 @@ export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
         return rows;
     } catch (err) {
         if (err instanceof Error) {
-            console.debug("loadInactiveProducts()", err.message);
+            debug("loadInactiveProducts()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadInactiveProducts()", err);
+        debug("loadInactiveProducts()", err);
         return Promise.reject(new Error('Error in loadInactiveProducts()'));
     }
 }
@@ -195,10 +195,10 @@ export async function loadInactiveProductImages(): Promise<ItemImageValidationRo
         return rows;
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadInactiveProductImages()", err.message);
+            debug("loadInactiveProductImages()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadInactiveProductImages()", err);
+        debug("loadInactiveProductImages()", err);
         return Promise.reject(new Error('Error in loadInactiveProductImages()'));
     }
 }
@@ -225,10 +225,10 @@ export async function loadCategoryProductValidation(): Promise<CategoryPageValid
         return rows;
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadCategoryProductValidation()", err.message);
+            debug("loadCategoryProductValidation()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadCategoryProductValidation()", err);
+        debug("loadCategoryProductValidation()", err);
         return Promise.reject(new Error('Error in loadCategoryProductValidation()'));
     }
 }
@@ -273,10 +273,10 @@ export async function loadProductCategoryValidation(): Promise<ProductCategoryPa
         return rows;
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadProductCategoryValidation()", err.message);
+            debug("loadProductCategoryValidation()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadProductCategoryValidation()", err);
+        debug("loadProductCategoryValidation()", err);
         return Promise.reject(new Error('Error in loadProductCategoryValidation()'));
     }
 }
@@ -365,10 +365,10 @@ export async function loadBillDetailValidation(): Promise<ProductMixValidationRo
         return rows;
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadBillDetailValidation()", err.message);
+            debug("loadBillDetailValidation()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadBillDetailValidation()", err);
+        debug("loadBillDetailValidation()", err);
         return Promise.reject(new Error('Error in loadBillDetailValidation()'));
     }
 }

@@ -94,10 +94,10 @@ export async function loadAccountInvoices({
         return rows;
     } catch(err:unknown) {
         if (err instanceof Error) {
-            console.debug("loadAccountInvoices()", err.message);
+            debug("loadAccountInvoices()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadAccountInvoices()", err);
+        debug("loadAccountInvoices()", err);
         return Promise.reject(new Error('Error in loadAccountInvoices()'));
     }
 }

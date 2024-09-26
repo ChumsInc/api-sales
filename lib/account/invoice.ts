@@ -279,10 +279,10 @@ async function loadImages(itemCodes: string[]): Promise<ProductImage[]> {
         return json?.imageList ?? [];
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadImages()", err.message);
+            debug("loadImages()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadImages()", err);
+        debug("loadImages()", err);
         return Promise.reject(new Error('Error in loadImages()'));
     }
 }

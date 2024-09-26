@@ -198,10 +198,10 @@ export async function loadRepInfo({
         return null;
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadRepInfo()", err.message);
+            debug("loadRepInfo()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadRepInfo()", err);
+        debug("loadRepInfo()", err);
         return Promise.reject(new Error('Error in loadRepInfo()'));
     }
 }
@@ -216,10 +216,10 @@ export async function loadUserReps(userid: number): Promise<SalespersonRow[]> {
         }));
     } catch (err) {
         if (err instanceof Error) {
-            console.debug("loadUserReps()", err.message);
+            debug("loadUserReps()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadUserReps()", err);
+        debug("loadUserReps()", err);
         return Promise.reject(new Error('Error in loadUserReps()'));
     }
 }
@@ -244,10 +244,10 @@ export async function loadRepManagers({
         return rep;
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadRepManagers()", err.message);
+            debug("loadRepManagers()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadRepManagers()", err);
+        debug("loadRepManagers()", err);
         return Promise.reject(new Error('Error in loadRepManagers()'));
     }
 }
@@ -264,10 +264,10 @@ export async function loadUserRep(userid: number): Promise<SalespersonRow | null
         return rep;
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadUserRep()", err.message);
+            debug("loadUserRep()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadUserRep()", err);
+        debug("loadUserRep()", err);
         return Promise.reject(new Error('Error in loadUserRep()'));
     }
 }
@@ -291,10 +291,10 @@ export async function loadManagedReps({
         }));
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadManagedReps()", err.message);
+            debug("loadManagedReps()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadManagedReps()", err);
+        debug("loadManagedReps()", err);
         return Promise.reject(new Error('Error in loadManagedReps()'));
     }
 }
@@ -364,10 +364,10 @@ export async function loadRepPace({
         return {userid, rep, repSubReps, repCustomers};
     } catch(err:unknown) {
         if (err instanceof Error) {
-            console.debug("loadRepPace()", err.message);
+            debug("loadRepPace()", err.message);
             return Promise.reject(err);
         }
-        console.debug("loadRepPace()", err);
+        debug("loadRepPace()", err);
         return Promise.reject(new Error('Error in loadRepPace()'));
     }
 }
