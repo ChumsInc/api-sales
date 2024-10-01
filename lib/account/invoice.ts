@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import {apiFetch, getDBCompany, getSageCompany, mysql2Pool, validateUserAccount} from 'chums-local-modules';
+import {apiFetchJSON, getDBCompany, getSageCompany, mysql2Pool, validateUserAccount} from 'chums-local-modules';
 import {
     ExtendedInvoice,
     InvoiceHistoryDetail,
@@ -17,7 +17,7 @@ import {ExtendedInvoiceResponse, ImageListResponse} from "./types.js";
 const debug = Debug('chums:lib:account:invoice');
 
 async function loadInvoiceHistoryHeader({userId, Company, InvoiceNo}: {
-    userId: number|string;
+    userId: number | string;
     Company: string;
     InvoiceNo: string;
 }): Promise<InvoiceHistoryHeader | null> {
@@ -87,15 +87,15 @@ async function loadInvoiceHistoryHeader({userId, Company, InvoiceNo}: {
                                                 SELECT DISTINCT Company, ARDivisionNo, CustomerNo
                                                 FROM users.user_SO_ShipToAddress uAC
                                                 WHERE (userid = :userid OR api_id = :api_id)) a) aa
-                                         on aa.Company = h.Company and
-                                            aa.ARDivisionNo = h.ARDivisionNo and
+                                         ON aa.Company = h.Company AND
+                                            aa.ARDivisionNo = h.ARDivisionNo AND
                                             aa.CustomerNo = h.CustomerNo
                               LEFT JOIN c2.ar_termscode tc
-                                        ON tc.Company = h.Company and
+                                        ON tc.Company = h.Company AND
                                            tc.TermsCode = h.TermsCode
                               LEFT JOIN c2.ar_salespersoncommission comm
-                                        ON comm.Company = h.Company and
-                                           comm.InvoiceNo = h.InvoiceNo and
+                                        ON comm.Company = h.Company AND
+                                           comm.InvoiceNo = h.InvoiceNo AND
                                            comm.InvoiceType = h.InvoiceType
                               LEFT JOIN c2.AR_OpenInvoice oi
                                         ON oi.Company = h.Company AND oi.ARDivisionNo = h.ARDivisionNo AND
@@ -274,8 +274,7 @@ async function loadImages(itemCodes: string[]): Promise<ProductImage[]> {
         const params = new URLSearchParams();
         params.append('item', itemCodes.join(','));
         const url = '/api/images/products/find/80/?' + params.toString();
-        const res = await apiFetch(url);
-        const json = await res.json() as ImageListResponse;
+        const json = await apiFetchJSON<ImageListResponse>(url);
         return json?.imageList ?? [];
     } catch (err: unknown) {
         if (err instanceof Error) {
@@ -359,8 +358,7 @@ async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
         const invoice = await loadInvoiceHistoryHeader({userId: user.id, Company, InvoiceNo});
         if (!invoice) {
             debug('loadInvoice() loading from sage', InvoiceNo);
-            const res = await apiFetch(`/node-sage/api/${sageCompany}/invoice/${InvoiceNo}`);
-            const json = await res.json() as ExtendedInvoiceResponse;
+            const json = await apiFetchJSON<ExtendedInvoiceResponse>(`https://intranet.chums.com/node-sage/api/${sageCompany}/invoice/${InvoiceNo}`);
             return json.result;
         }
         const validation = await validateUserAccount({
