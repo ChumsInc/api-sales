@@ -17,7 +17,10 @@ export async function loadExistingCustomerNumbers(prefix: string): Promise<strin
         }
         const sql = `SELECT DISTINCT CustomerNo FROM c2.ar_customer WHERE CustomerNo LIKE :prefix
                      UNION
-                     SELECT DISTINCT CustomerNo FROM c2.ar_invoicehistoryheader WHERE CustomerNo LIKE :prefix`
+                     SELECT DISTINCT CustomerNo FROM c2.ar_invoicehistoryheader WHERE CustomerNo LIKE :prefix
+                     UNION
+                     SELECT DISTINCT CustomerNo FROM c2.SO_SalesOrderHistoryHeader WHERE CustomerNo LIKE :prefix
+                     `
         const [rows] = await mysql2Pool.query<ExistingCustomerRow[]>(sql, {prefix: `${prefix}%`});
         return rows.map(row => row.CustomerNo);
     } catch(err:unknown) {
