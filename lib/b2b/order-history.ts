@@ -19,6 +19,7 @@ export interface LoadOrderHistoryParams {
     userId?: number|string|null;
     arDivisionNo?: string|null;
     customerNo?: string|null;
+    uID: number;
 }
 
 async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHistoryOrder[]> {
@@ -40,7 +41,12 @@ async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHist
                             (sohh.TaxableAmt + sohh.NonTaxableAmt - sohh.DiscountAmt) AS OrderTotal,
                             b2bh.users,
                             b2bh.userActions
-                     FROM c2.SO_SalesOrderHistoryHeader sohh
+                     FROM users.users u
+                              INNER JOIN users.accounts ua ON ua.userid = u.id and ua.isRepAccount = 1 and ua.primaryAccount = 1
+                              INNER JOIN c2.SO_SalesOrderHistoryHeader sohh
+                                         ON sohh.Company = ua.Company AND 
+                                            sohh.SalespersonDivisionNo like ua.SalespersonDivisionNo AND
+                                            sohh.SalespersonNo like ua.SalespersonNo
                               INNER JOIN (SELECT bh.dbCompany     AS Company,
                                                  bh.SalesOrderNo,
                                                  JSON_ARRAYAGG(DISTINCT
@@ -68,7 +74,8 @@ async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHist
                                                                  rep.SalespersonDivisionNo =
                                                                  sohh.SalespersonDivisionNo AND
                                                                  rep.SalespersonNo = sohh.SalespersonNo
-                     WHERE sohh.Company = 'chums'
+                     WHERE u.id = :uID 
+                       AND sohh.Company = 'chums'
                        AND sohh.OrderStatus NOT IN ('X', 'Z')
                        AND (IFNULL(:arDivisionNo, '') = '' OR sohh.ARDivisionNo = :arDivisionNo)
                        AND (IFNULL(:customerNo, '') = '' OR sohh.CustomerNo = :customerNo)
@@ -111,6 +118,7 @@ export const getOrderHistory = async (req:Request, res:Response) => {
             userId,
             arDivisionNo,
             customerNo,
+            uID: res.locals.profile?.user?.id ?? 0
         }
         const orders = await loadOrderHistory(params);
         res.json({params, orders});
