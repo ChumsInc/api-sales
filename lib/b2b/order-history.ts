@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import {RowDataPacket} from "mysql2";
 import {mysql2Pool} from "chums-local-modules";
-import {Request, Response} from 'express'
+import type {Request, Response} from 'express'
 import dayjs from "dayjs";
 import {B2BHistoryOrder} from "./types.js";
 
