@@ -361,6 +361,7 @@ export async function loadRepPace({
             ? new Decimal(rep.total.InvCYTD).add(rep.total.OpenOrders).toDecimalPlaces(4).toString()
             : new Decimal(rep.total.rate).add(1).times(rep.total.InvPY).toDecimalPlaces(4).toString();
 
+        debug('loadRepPace()', rep.total);
         return {userid, rep, repSubReps, repCustomers};
     } catch(err:unknown) {
         if (err instanceof Error) {

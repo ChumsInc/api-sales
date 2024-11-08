@@ -172,15 +172,20 @@ export async function loadManagedCustomers({Company, SalespersonDivisionNo, Sale
             maxDate,
             groupByCustomer
         });
-        return repCustomers.map(row => ({
-            ...row,
-            rate: new Decimal(row.InvPYTD).eq(0)
+        // return repCustomers;
+        return repCustomers.map(row => {
+            const rate = new Decimal(row.InvPYTD).eq(0)
                 ? (new Decimal(row.InvCYTD).lte(0) ? 0 : 1)
-                : new Decimal(row.InvCYTD).sub(row.InvPYTD).div(row.InvPYTD).toDecimalPlaces(4).toString(),
-            pace: new Decimal(row.InvPY).eq(0)
+                : new Decimal(row.InvCYTD).sub(row.InvPYTD).div(row.InvPYTD).toDecimalPlaces(4).toString();
+            const pace = new Decimal(row.InvPY).eq(0)
                 ? new Decimal(row.InvCYTD).add(row.OpenOrders).toDecimalPlaces(4).toString()
-                : new Decimal(row.rate).add(1).times(row.InvPY).toDecimalPlaces(4).toString()
-        }));
+                : new Decimal(rate).add(1).times(row.InvPY).toDecimalPlaces(4).toString()
+            return {
+                ...row,
+                rate,
+                pace
+            }
+        })
     } catch(err:unknown) {
         if (err instanceof Error) {
             debug("loadManagedCustomers()", err.message);
