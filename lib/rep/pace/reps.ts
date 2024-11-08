@@ -335,31 +335,31 @@ export async function loadRepPace({
         });
 
         repCustomers.forEach(row => {
-            rep!.total.OpenOrders = new Decimal(rep?.total.OpenOrders ?? 0).add(row.OpenOrders).toString();
-            rep!.total.InvCYTD = new Decimal(rep?.total.InvCYTD ?? 0).add(row.InvCYTD).toString();
-            rep!.total.InvPYTD = new Decimal(rep?.total.InvPYTD ?? 0).add(row.InvPYTD).toString();
-            rep!.total.InvPY = new Decimal(rep?.total.InvPY ?? 0).add(row.InvPY).toString();
-            rep!.total.InvP2TD = new Decimal(rep?.total.InvP2TD ?? 0).add(row.InvP2TD).toString();
-            rep!.total.InvP2 = new Decimal(rep?.total.InvP2 ?? 0).add(row.InvP2).toString();
+            rep!.total.OpenOrders = new Decimal(rep?.total.OpenOrders ?? 0).add(row.OpenOrders).toDecimalPlaces(4).toString();
+            rep!.total.InvCYTD = new Decimal(rep?.total.InvCYTD ?? 0).add(row.InvCYTD).toDecimalPlaces(4).toString();
+            rep!.total.InvPYTD = new Decimal(rep?.total.InvPYTD ?? 0).add(row.InvPYTD).toDecimalPlaces(4).toString();
+            rep!.total.InvPY = new Decimal(rep?.total.InvPY ?? 0).add(row.InvPY).toDecimalPlaces(4).toString();
+            rep!.total.InvP2TD = new Decimal(rep?.total.InvP2TD ?? 0).add(row.InvP2TD).toDecimalPlaces(4).toString();
+            rep!.total.InvP2 = new Decimal(rep?.total.InvP2 ?? 0).add(row.InvP2).toDecimalPlaces(4).toString();
         })
 
         const repSubReps = await Promise.all(subReps.map(rep => loadRepPace({...rep, minDate, maxDate, userid})));
         repSubReps.forEach(sr => {
             if (!!sr && sr.rep) {
-                rep!.total.OpenOrders = new Decimal(rep?.total?.OpenOrders ?? 0).add(sr.rep.total.OpenOrders).toString();
-                rep!.total.InvCYTD = new Decimal(rep?.total?.InvCYTD ?? 0).add(sr.rep.total.InvCYTD).toString();
-                rep!.total.InvPYTD = new Decimal(rep?.total?.InvPYTD ?? 0).add(sr.rep.total.InvPYTD).toString();
-                rep!.total.InvPY = new Decimal(rep?.total?.InvPY ?? 0).add(sr.rep.total.InvPY).toString();
-                rep!.total.InvP2TD = new Decimal(rep?.total?.InvP2TD ?? 0).add(sr.rep.total.InvP2TD).toString();
-                rep!.total.InvP2 = new Decimal(rep?.total?.InvP2 ?? 0).add(sr.rep.total.InvP2).toString();
+                rep!.total.OpenOrders = new Decimal(rep?.total?.OpenOrders ?? 0).add(sr.rep.total.OpenOrders).toDecimalPlaces(4).toString();
+                rep!.total.InvCYTD = new Decimal(rep?.total?.InvCYTD ?? 0).add(sr.rep.total.InvCYTD).toDecimalPlaces(4).toString();
+                rep!.total.InvPYTD = new Decimal(rep?.total?.InvPYTD ?? 0).add(sr.rep.total.InvPYTD).toDecimalPlaces(4).toString();
+                rep!.total.InvPY = new Decimal(rep?.total?.InvPY ?? 0).add(sr.rep.total.InvPY).toDecimalPlaces(4).toString();
+                rep!.total.InvP2TD = new Decimal(rep?.total?.InvP2TD ?? 0).add(sr.rep.total.InvP2TD).toDecimalPlaces(4).toString();
+                rep!.total.InvP2 = new Decimal(rep?.total?.InvP2 ?? 0).add(sr.rep.total.InvP2).toDecimalPlaces(4).toString();
             }
         });
         rep.total.rate = rep.total.InvPYTD === 0
             ? (new Decimal(rep.total.InvCYTD).lte(0) ? 0 : 1)
-            : new Decimal(rep.total.InvCYTD).sub(rep.total.InvPYTD).div(rep.total.InvPYTD).toString()
+            : new Decimal(rep.total.InvCYTD).sub(rep.total.InvPYTD).div(rep.total.InvPYTD).toDecimalPlaces(4).toString()
         rep.total.pace = new Decimal(rep.total.InvPY).eq(0)
-            ? new Decimal(rep.total.InvCYTD).add(rep.total.OpenOrders).toString()
-            : new Decimal(rep.total.rate).add(1).times(rep.total.InvPY).toString();
+            ? new Decimal(rep.total.InvCYTD).add(rep.total.OpenOrders).toDecimalPlaces(4).toString()
+            : new Decimal(rep.total.rate).add(1).times(rep.total.InvPY).toDecimalPlaces(4).toString();
 
         return {userid, rep, repSubReps, repCustomers};
     } catch(err:unknown) {
