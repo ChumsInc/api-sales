@@ -310,7 +310,7 @@ export async function loadRepPace({
                                   }: LoadRepPaceProps): Promise<RepPace | null> {
     try {
         let rep = await loadRepInfo({Company, SalespersonDivisionNo, SalespersonNo});
-        let pace: RepPace;
+        // let pace: RepPace;
         if (!rep) {
             const user = await loadUserRep(userid);
             if (!user) {
