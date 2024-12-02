@@ -1,0 +1,23 @@
+div(style="font-family: sans-serif;")
+    h2 Renamed Customers
+    a(href="https://intranet.chums.com/reports/audit/customers/renamed-customers/", target="_blank", class="visually-hidden") View in Chums Intranet
+    hr
+    table.table.table-sm.table-hover(style="font-size: small" cellpadding="3" cellspacing="0")
+        caption Customers Updated in the last #{since} days
+        thead
+            tr
+                th(style="padding: 0.25rem 1rem;") Customer Account
+                th(style="padding: 0.25rem 1rem;") Status
+                th(style="padding: 0.25rem 1rem;") Previous Customer Name
+                th(style="padding: 0.25rem 1rem;") Updated Customer Name
+                th(style="padding: 0.25rem 1rem;") Date Updated
+                th(style="padding: 0.25rem 1rem;") Updated By
+        tbody
+            for row in rows
+                tr
+                    td(style="padding: 0.25rem 1rem;") #{row.ARDivisionNo}-#{row.CustomerNo}
+                    td(style="padding: 0.25rem 1rem;") #{row.CustomerStatus}
+                    td(style="padding: 0.25rem 1rem;") #{row.previousCustomerName}
+                    td(style="padding: 0.25rem 1rem;") #{row.updatedCustomerName}
+                    td(style="padding: 0.25rem 1rem;") #{row.dateUpdated}
+                    td(style="padding: 0.25rem 1rem;") #{row.userName}
