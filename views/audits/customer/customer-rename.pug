@@ -17,7 +17,13 @@ div(style="font-family: sans-serif;")
                 tr
                     td(style="padding: 0.25rem 1rem;") #{row.ARDivisionNo}-#{row.CustomerNo}
                     td(style="padding: 0.25rem 1rem;") #{row.CustomerStatus}
-                    td(style="padding: 0.25rem 1rem;") #{row.previousCustomerName}
-                    td(style="padding: 0.25rem 1rem;") #{row.updatedCustomerName}
+                    if !row.previousCustomerName
+                        td(style="padding: 0.25rem 1rem; color: red; font-weight: bold; text-align: center;") MISSING!
+                    else
+                        td(style="padding: 0.25rem 1rem;") #{row.previousCustomerName}
+                    if !row.updatedCustomerName
+                        td(style="padding: 0.25rem 1rem; background-color: red; color: white; font-weight: bold; text-align: center;") MISSING!
+                    else
+                        td(style="padding: 0.25rem 1rem;") #{row.updatedCustomerName}
                     td(style="padding: 0.25rem 1rem;") #{row.dateUpdated}
                     td(style="padding: 0.25rem 1rem;") #{row.userName}
