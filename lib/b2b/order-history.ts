@@ -104,7 +104,7 @@ async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHist
     }
 }
 
-export const getOrderHistory = async (req:Request, res:Response) => {
+export const getOrderHistory = async (req:Request, res:Response):Promise<void> => {
     try {
         const minDate:string|null = req.query.minDate as string;
         const maxDate:string|null = req.query.maxDate as string;
@@ -125,7 +125,7 @@ export const getOrderHistory = async (req:Request, res:Response) => {
     } catch(err:unknown) {
         if (err instanceof Error) {
             debug("getOrderHistory()", err.message);
-            return res.json({error: err.message, name: err.name});
+            res.json({error: err.message, name: err.name});
         }
         res.json({error: 'unknown error in getOrderHistory'});
     }

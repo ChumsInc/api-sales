@@ -109,9 +109,9 @@ async function loadShipToAudit(options: ShipToRepAuditOptions): Promise<ShipToRe
                      WHERE NOT (sr.SalespersonDivisionNo = br.SalespersonDivisionNo AND
                                 sr.SalespersonNo = br.SalespersonNo)
                        AND IF(:excludeSupervisor, NOT ((sr.SalesManagerDivisionNo = br.SalespersonDivisionNo AND
-                             sr.SalesManagerNo = br.SalespersonNo) OR
-                            (br.SalesManagerDivisionNo = sr.SalespersonDivisionNo AND
-                             br.SalesManagerNo = sr.SalespersonNo)), 1)
+                                                        sr.SalesManagerNo = br.SalespersonNo) OR
+                                                       (br.SalesManagerDivisionNo = sr.SalespersonDivisionNo AND
+                                                        br.SalesManagerNo = sr.SalespersonNo)), 1)
                        AND IF(:excludeUnassigned, c.SalespersonNo <> '0000', 1)
                        AND IF(:excludeHouse, c.SalespersonNo NOT IN ('H00', 'H00E', 'H00W', 'H04', 'R00'), 1)
                        AND NOT (c.ARDivisionNo = '01' AND c.CustomerNo = 'TEST')
@@ -144,7 +144,7 @@ async function loadShipToAudit(options: ShipToRepAuditOptions): Promise<ShipToRe
     }
 }
 
-export const getCustomerShipToAudit = async (req: Request, res: Response) => {
+export const getCustomerShipToAudit = async (req: Request, res: Response):Promise<void> => {
     try {
         const options: ShipToRepAuditOptions = {
             excludeUnassigned: req.query.excludeUnassigned === '1',
@@ -157,13 +157,14 @@ export const getCustomerShipToAudit = async (req: Request, res: Response) => {
     } catch (err: unknown) {
         if (err instanceof Error) {
             debug("getCustomerShipToAudit()", err.message);
-            return res.json({error: err.message, name: err.name});
+            res.json({error: err.message, name: err.name});
+            return
         }
         res.json({error: 'unknown error in getCustomerShipToAudit'});
     }
 }
 
-export const renderCustomerShipToAudit = async (req: Request, res: Response) => {
+export const renderCustomerShipToAudit = async (req: Request, res: Response):Promise<void> => {
     try {
         const options: ShipToRepAuditOptions = {
             excludeUnassigned: req.query.excludeUnassigned === '1',
@@ -175,7 +176,8 @@ export const renderCustomerShipToAudit = async (req: Request, res: Response) => 
     } catch (err: unknown) {
         if (err instanceof Error) {
             debug("renderCustomerShipToAudit()", err.message);
-            return res.json({error: err.message, name: err.name});
+            res.json({error: err.message, name: err.name});
+            return;
         }
         res.json({error: 'unknown error in renderCustomerShipToAudit'});
     }

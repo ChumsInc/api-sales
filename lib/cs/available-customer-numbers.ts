@@ -55,7 +55,7 @@ export async function loadAvailableCustomerNumbers(prefix: string, limit: number
     }
 }
 
-export async function getAvailableCustomerNumbers(req:Request, res:Response) {
+export async function getAvailableCustomerNumbers(req:Request, res:Response):Promise<void> {
     try {
         const prefix = req.query.prefix as string ?? '';
         if (!prefix.length || prefix.length < 2) {
@@ -71,7 +71,8 @@ export async function getAvailableCustomerNumbers(req:Request, res:Response) {
     } catch(err:unknown) {
         if (err instanceof Error) {
             debug("getAvailableCustomerNumbers()", err.message);
-            return res.json({error: err.message, name: err.name});    
+            res.json({error: err.message, name: err.name});
+            return;
         }
         res.json({error: 'unknown error in getAvailableCustomerNumbers'});
     }

@@ -13,6 +13,7 @@ import {
 import {RowDataPacket} from "mysql2";
 import {Request, Response} from "express";
 import {ExtendedInvoiceResponse, ImageListResponse} from "./types.js";
+import {loadImages} from "../utils/images.js";
 
 const debug = Debug('chums:lib:account:invoice');
 
@@ -266,26 +267,6 @@ async function loadPDFStatus({Company, ARDivisionNo, CustomerNo, InvoiceNo}: {
 }
 
 
-async function loadImages(itemCodes: string[]): Promise<ProductImage[]> {
-    try {
-        if (itemCodes.length === 0 || !itemCodes) {
-            return [];
-        }
-        const params = new URLSearchParams();
-        params.append('item', itemCodes.join(','));
-        const url = '/api/images/products/find/80/?' + params.toString();
-        const json = await apiFetchJSON<ImageListResponse>(url);
-        return json?.imageList ?? [];
-    } catch (err: unknown) {
-        if (err instanceof Error) {
-            debug("loadImages()", err.message);
-            return Promise.reject(err);
-        }
-        debug("loadImages()", err);
-        return Promise.reject(new Error('Error in loadImages()'));
-    }
-}
-
 async function loadInvoicePayments({Company, InvoiceNo, HeaderSeqNo, ARDivisionNo, CustomerNo}: {
     Company: string;
     InvoiceNo: string;
@@ -404,18 +385,19 @@ async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
     }
 }
 
-export const getInvoice = async (req: Request, res: Response) => {
+export const getInvoice = async (req: Request, res: Response):Promise<void> => {
     try {
         const {Company, InvoiceNo, ARDivisionNo, CustomerNo} = req.params;
 
-        const {user = {}} = res.locals?.profile;
-        const {images = ''} = req.query;
+        const user = res.locals!.profile!.user as User;
+        const images = req.query.images ?? '';
         const invoice = await loadInvoice({Company, InvoiceNo, user})
         res.json({invoice});
     } catch (err) {
         if (err instanceof Error) {
             debug("getInvoice()", err.message);
-            return res.json({error: err.message, name: err.name});
+            res.json({error: err.message, name: err.name});
+            return;
         }
         res.json({error: 'unknown error in getInvoice'});
     }

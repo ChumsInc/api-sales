@@ -120,7 +120,8 @@ export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
     }
 }
 
-export async function loadInactiveProductImages(): Promise<ItemImageValidationRow[]> {
+export async function loadInactiveProductImages(includePreferredImages = false): Promise<ItemImageValidationRow[]> {
+    const preferredImages = includePreferredImages ? 1 : 0;
     try {
         const sql = `
             SELECT p.products_id                                                     AS id,
@@ -133,12 +134,13 @@ export async function loadInactiveProductImages(): Promise<ItemImageValidationRo
                    pi.itemCode                                                       AS childItemCode,
                    pi.colorCode                                                      AS childColorCode,
                    IFNULL(pi.active, 0)                                              AS childActive,
+                   NULL                                                              AS preferredImage,
                    JSON_UNQUOTE(JSON_EXTRACT(pi.additionalData, '$.image_filename')) AS childImageFilename
             FROM b2b_oscommerce.products p
                      INNER JOIN b2b_oscommerce.products_items pi
                                 ON pi.productsID = p.products_id AND
                                    (pi.colorCode = p.products_default_color OR
-                                    JSON_UNQUOTE(JSON_EXTRACT(pi.additionalData, '$.image_filename')) =
+                                    JSON_VALUE(pi.additionalData, '$.image_filename') =
                                     REPLACE(p.products_image, '?', p.products_default_color))
             WHERE p.products_status = 1
               AND IFNULL(pi.active, 0) = 0
@@ -155,12 +157,13 @@ export async function loadInactiveProductImages(): Promise<ItemImageValidationRo
                    pi.itemCode,
                    pi.colorCode,
                    IFNULL(pi.active, 0)                                              AS childActive,
+                   NULL                                                              AS preferredImage,
                    JSON_UNQUOTE(JSON_EXTRACT(pi.additionalData, '$.image_filename')) AS childImageFilename
             FROM b2b_oscommerce.products p
                      LEFT JOIN b2b_oscommerce.products_items pi
                                ON pi.productsID = p.products_id AND
                                   (pi.colorCode = p.products_default_color OR
-                                   JSON_UNQUOTE(JSON_EXTRACT(pi.additionalData, '$.image_filename')) =
+                                   JSON_VALUE(pi.additionalData, '$.image_filename') =
                                    REPLACE(p.products_image, '?', p.products_default_color))
             WHERE p.products_status = 1
               AND p.products_sell_as = 4
@@ -178,20 +181,47 @@ export async function loadInactiveProductImages(): Promise<ItemImageValidationRo
                    p.products_default_color                                         AS defaultColor,
                    pi.itemCode                                                      AS childItemCode,
                    pi.colorCode                                                     AS childColorCode,
-                   IFNULL(i.active, 0)                                              AS childActive,
-                   i.filename                                                       AS childImageFilename
+                   IFNULL(i.active, '')                                             AS childActive,
+                   IFNULL(i.preferred_image, 0)                                     AS preferredImage,
+                   NULL                                                             AS childImageFilename
             FROM b2b_oscommerce.products p
                      LEFT JOIN b2b_oscommerce.products_items pi
                                ON pi.productsID = p.products_id AND
                                   pi.colorCode = p.products_default_color
                      LEFT JOIN c2.PM_Images i
                                ON i.filename =
-                                  IFNULL(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(pi.additionalData, '$.image_filename')), ''),
+                                  IFNULL(NULLIF(JSON_VALUE(pi.additionalData, '$.image_filename'), ''),
                                          REPLACE(p.products_image, '?', p.products_default_color))
             WHERE p.products_status = 1
               AND p.products_sell_as = 4
-              AND IFNULL(i.active, 0) = 0`;
-        const [rows] = await mysql2Pool.query<(ItemImageValidationRow & RowDataPacket)[]>(sql);
+              AND (IFNULL(i.active, 0) = 0 OR IFNULL(i.preferred_image, 0) = 0)
+              AND (IFNULL(${preferredImages}, 0) = 1)
+
+            UNION
+
+            SELECT p.products_id                                            AS id,
+                   p.products_keyword                                       AS keyword,
+                   p.products_sell_as                                       AS sellAs,
+                   p.products_model                                         AS ItemCode,
+                   p.products_status                                        AS status,
+                   REPLACE(p.products_image, '?', p.products_default_color) AS productImage,
+                   p.products_default_color                                 AS defaultColor,
+                   NULL                                                     AS childItemCode,
+                   NULL                                                     AS childColorCode,
+                   NULL                                                     AS childActive,
+                   IFNULL(i.preferred_image, 0)                             AS preferredImage,
+                   NULL                                                     AS childImageFilename
+            FROM b2b_oscommerce.products p
+                     LEFT JOIN c2.PM_Images i
+                               ON i.filename = REPLACE(p.products_image, '?', p.products_default_color)
+            WHERE p.products_status = 1
+              AND (IFNULL(i.active, 0) = 0 OR IFNULL(i.preferred_image, 0) = 0)
+              AND (IFNULL(${preferredImages}, 0) = 1)
+
+            ORDER BY keyword, ItemCode
+        `;
+        type LoadInactiveImageRow = ItemImageValidationRow & RowDataPacket;
+        const [rows] = await mysql2Pool.query<LoadInactiveImageRow[]>(sql);
         return rows;
     } catch (err: unknown) {
         if (err instanceof Error) {
@@ -373,10 +403,10 @@ export async function loadBillDetailValidation(): Promise<ProductMixValidationRo
     }
 }
 
-export async function getItemValidation(req: Request, res: Response) {
+export async function getItemValidation(req: Request, res: Response):Promise<void> {
     try {
         const items = await loadInactiveProducts();
-        const images = await loadInactiveProductImages();
+        const images = await loadInactiveProductImages(req.query.preferredImage === '1');
         const pages = await loadCategoryProductValidation();
         const productCategories = await loadProductCategoryValidation();
         const mixes = await loadBillDetailValidation();
@@ -384,7 +414,8 @@ export async function getItemValidation(req: Request, res: Response) {
     } catch (err) {
         if (err instanceof Error) {
             debug("getItemValidation()", err.message);
-            return res.json({error: err.message, name: err.name});
+            res.json({error: err.message, name: err.name});
+            return;
         }
         res.json({error: 'unknown error in getItemValidation'});
     }
@@ -394,7 +425,7 @@ export async function getItemValidation(req: Request, res: Response) {
 export async function renderItemValidation(req: Request, res: Response) {
     try {
         const items = await loadInactiveProducts();
-        const images = await loadInactiveProductImages();
+        const images = await loadInactiveProductImages(req.query.preferredImage === '1');
         const pages = await loadCategoryProductValidation();
         const productCategories = await loadProductCategoryValidation();
         const mixes = [] as ProductMixValidationRow[]; //await loadBillDetailValidation();
@@ -417,7 +448,8 @@ export async function renderItemValidation(req: Request, res: Response) {
     } catch (err) {
         if (err instanceof Error) {
             debug("renderItemValidation()", err.message);
-            return res.json({error: err.message, name: err.name});
+            res.json({error: err.message, name: err.name});
+            return;
         }
         res.json({error: 'unknown error in renderItemValidation'});
     }

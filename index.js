@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import http from 'node:http';
 import path from 'node:path';
-import {default as libRouter} from './lib/index.js';
+import {default as libRouter} from './lib/index.ts';
 import Debug from 'debug';
 
 const debug = Debug('chums:index');

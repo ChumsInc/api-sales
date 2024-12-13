@@ -8,7 +8,7 @@ table.table.table-xs.table-hover.table-sticky
 
     tbody
         each row in rows
-            tr
+            tr(class=(row.CustomerStatus === 'I' ? 'table-warning' : ''))
                 td #{row['account']}
                 each field in fields
                     td(class="f-" + field) #{row[field]}

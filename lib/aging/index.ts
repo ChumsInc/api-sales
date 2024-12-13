@@ -4,7 +4,7 @@ import {loadRepAging, LoadRepAgingArgs, loadRepCustomerAging} from "./aging.js";
 
 const debug = Debug('chums:lib:aging');
 
-export const getAging = async (req:Request, res:Response) => {
+export const getAging = async (req:Request, res:Response):Promise<void> => {
     try {
         const userId = res.locals.profile?.user?.id ?? 0;
         const args:LoadRepAgingArgs = {
@@ -18,7 +18,8 @@ export const getAging = async (req:Request, res:Response) => {
     } catch(err:unknown) {
         if (err instanceof Error) {
             debug("getAging()", err.message);
-            return res.json({error: err.message, name: err.name});
+            res.json({error: err.message, name: err.name});
+            return;
         }
         res.json({error: 'unknown error in getAging'});
     }
