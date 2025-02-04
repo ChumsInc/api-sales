@@ -70,6 +70,8 @@ import {getAging} from "./aging/index.js";
 import {getCustomerShipToAudit, renderCustomerShipToAudit} from "./audits/customer/ship-to-rep.js";
 import {getAvailableCustomerNumbers} from "./cs/available-customer-numbers.js";
 import {getCustomerRenameHistory, renderCustomerRenameHistory} from "./account/customer-rename-history.js";
+import {getExistingOpticalRows} from "./utils/fix-optical.js";
+import {postRenumberCustomer} from "./utils/renumber-customer/index.js";
 
 const debug = Debug('chums:lib');
 const router = Router();
@@ -123,6 +125,7 @@ router.get('/cs/available-customer-numbers.json', getAvailableCustomerNumbers);
 router.get('/census-audit/:minDate(\\d{4}-\\d{2}-\\d{2})-:maxDate(\\d{4}-\\d{2}-\\d{2})', getCensusAudit);
 router.get('/census-audit/:minDate(\\d{4}-\\d{2}-\\d{2})-:maxDate(\\d{4}-\\d{2}-\\d{2}).xlsx', getCensusAuditXLSX);
 
+
 router.get('/customer-types', getCustomerTypes);
 router.get('/customer-types/:ARDivisionNo(\\d{2})/:CustomerType', getCustomersByType);
 
@@ -132,6 +135,8 @@ router.get('/commission/:company(chums|bc)/:minDate/:maxDate/:SalespersonDivisio
 
 router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ARDivisionNo-:CustomerNo/:ItemCode?', getCustomerItemSales);
 router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ItemCode?', getCustomerItemSales);
+router.get('/customer/renumber/:from/:to/test.json', postRenumberCustomer);
+router.post('/customer/renumber/:from/:to/exec.json', postRenumberCustomer);
 
 router.get('/gdpr/:Company(chums|bc)/:SalesOrderNo', getGDPRSORequest);
 router.post('/gdpr/:Company(chums|bc)/:SalesOrderNo', execGDPRSORequest);
