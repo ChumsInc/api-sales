@@ -32,7 +32,8 @@ const tables: TableDefinition[] = [
     {table: 'c2.IM_ItemCustomerHistoryByPeriod'},
     {table: 'c2.SO_ShipToAddress', handler: deleteRemainingHandler},
     {table: 'barcodes.bc_customer', handler: deleteRemainingHandler},
-    {table: 'c2.ar_customer', handler: deleteRemainingHandler}
+    {table: 'c2.ar_customer', handler: deleteRemainingHandler},
+    {table: 'users.accounts'},
 ];
 
 
