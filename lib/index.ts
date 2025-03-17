@@ -21,8 +21,8 @@ import {default as b2bRouter} from './b2b/index.js';
 import {validateRep} from './rep/validate-rep.js';
 import {getRepItemHistory} from './rep/rep-item-history.js';
 import {getCondensedRepList, getRepList, getUserRepList} from './rep/rep-list.js';
-import {getRepManagers, getRepPace} from './rep/rep-pace.js'
-import {getRepPaceXLSX} from './rep/rep-pace-xlsx.js';
+import {getRepManagers, getRepPace, getRepPace_v2} from './rep/rep-pace.js'
+import {getRepPaceXLSX, getRepPaceXLSX_v2} from './rep/rep-pace-xlsx.js';
 import {getRepAccounts, getRepAccountsXLSX, getRepTotals} from './rep/account-list.js';
 import {getRepOrders} from './rep/rep-orders.js';
 import {execGDPRRequest, execGDPRSORequest, getGDPRSORequest} from './gdpr/index.js'
@@ -197,10 +197,13 @@ router.get('/rep/safety/invoices/:company(chums|bc)/:SalespersonDivisionNo-:Sale
 router.get('/rep/managers/:Company/:SalespersonDivisionNo-:SalespersonNo', getRepManagers);
 router.get('/rep/managers/:Company', getRepManagers);
 
+
 router.get('/rep/pace/:Company/:SalespersonDivisionNo-:SalespersonNo/:minDate/:maxDate', getRepPace);
 router.get('/rep/pace/:Company/:SalespersonDivisionNo-:SalespersonNo/:minDate/:maxDate/xlsx', getRepPaceXLSX);
 router.get('/rep/pace/:Company/:minDate/:maxDate', getRepPace);
 router.get('/rep/pace/:Company/reps', getRepList);
+router.get('/rep/pace.json', getRepPace_v2);
+router.get('/rep/pace.xlsx', getRepPaceXLSX_v2)
 router.get('/rep/orders/:Company', getOpenRepOrders);
 
 router.get('/rep/:company/:salespersonDivisionNo-:salespersonNo/:minDate/:maxDate/items', validateRep, getRepItemHistory);
