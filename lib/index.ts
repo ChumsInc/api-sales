@@ -73,6 +73,8 @@ import {getCustomerRenameHistory, renderCustomerRenameHistory} from "./account/c
 import {getExistingOpticalRows} from "./utils/fix-optical.js";
 import {postRenumberCustomer} from "./utils/renumber-customer/index.js";
 
+import {renderVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
+
 const debug = Debug('chums:lib');
 const router = Router();
 
@@ -148,6 +150,8 @@ router.get('/invoice/:Company/:InvoiceType(AD|CA|CM|DM|IN)/:InvoiceNo', getInvoi
 router.get('/invoice/:Company/:InvoiceNo', getInvoice);
 router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo/count', getAccountInvoiceCount);
 router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo', getAccountInvoices);
+
+router.get('/monthly-sales/vbg-monthly-sales.csv', renderVBGMonthlyInvoices);
 
 router.get('/orders/items/:company(chums|bc)/:ARDivisionNo-:CustomerNo', getOpenItems);
 router.get('/orders/margins/:company(chums|bc)/:salesOrderNo([\\S]{7})', getOrderItemMargins);
