@@ -1,0 +1,116 @@
+import Debug from "debug";
+import {mysql2Pool} from "chums-local-modules";
+import {RowDataPacket} from "mysql2";
+import dayjs from "dayjs";
+import numeral from "numeral";
+import {Response, Request} from "express";
+
+const debug = Debug('chums:lib:vbg-month-sales')
+
+export interface VBGMonthSales {
+    SalesOrderNo: string;
+    ARDivisionNo: string;
+    CustomerNo: string;
+    customerName: string;
+    InvoiceNo: string;
+    InvoiceDate: string;
+    salesTotal: string | number;
+    freight: string | number;
+    TaxSchedule: string;
+    SalesTaxAmt: string |number;
+    total: string | number;
+    TermsCodeDesc: string;
+}
+
+export type VBGMonthSalesRow = RowDataPacket & VBGMonthSales;
+
+
+let tableHeaders: string[] = [
+    'Sales Order No',
+    'AR Division No',
+    'Customer No',
+    'Customer Name',
+    'Invoice No',
+    'Invoice Date',
+    'Sales Total',
+    'Freight',
+    'Tax Schedule',
+    'Sales Tax Amount',
+    'Total',
+    'Terms Code Desc'
+]
+
+const queryVBGMonthlySales = async (year: string, month: string):Promise<VBGMonthSales[]> => {
+    const reportDate = `${year}-${month}`;
+    try {
+        const sql = `
+            select ihh.SalesOrderNo,
+                   ihh.ARDivisionNo,
+                   ihh.CustomerNo,
+                   ihh.BillToName                                                                  as customerName,
+                   ihh.InvoiceNo,
+                   ihh.InvoiceDate,
+                   ihh.TaxableSalesAmt + ihh.NonTaxableSalesAmt                                    as salesTotal,
+                   ihh.FreightAmt                                                                  as freight,
+                   ihh.TaxSchedule,
+                   ihh.SalesTaxAmt,
+                   ihh.TaxableSalesAmt + ihh.NonTaxableSalesAmt + ihh.SalesTaxAmt + ihh.FreightAmt as total,
+                   ifnull(tc.TermsCodeDesc, '') as TermsCodeDesc
+            from c2.ar_invoicehistoryheader ihh
+                     left join c2.ar_termscode tc on ihh.company = tc.company and ihh.TermsCode = tc.TermsCode
+           # where ihh.InvoiceDate like '2025-03%'
+            where year(ihh.InvoiceDate) = :year
+              and month(ihh.InvoiceDate) = :month
+              and ihh.InvoiceType <> 'XD'
+              and ihh.CustomerNo = 'NJ0001'
+            order by ihh.InvoiceNo;
+        `
+        const [rows] = await mysql2Pool.query<VBGMonthSalesRow[]>(sql, {year, month});
+        return rows;
+    } catch(err:unknown) {
+        if (err instanceof Error) {
+            debug("queryVBGMonthlySales()", err.message);
+            return Promise.reject(err);
+        }
+        debug("queryVBGMonthlySales()", err);
+        return Promise.reject(new Error('Error in queryVBGMonthlySales()'));
+    }
+}
+
+export const renderVBGMonthlyInvoices = async (req: Request, res: Response) => {
+    try {
+        const date = dayjs().subtract(1, 'month');
+        const year: string = req.query.year as string ?? date.format('YYYY');
+        const month: string = req.query.month as string ?? date.format('MM');
+        let csv: string = tableHeaders.join(',') + '\n';
+        const invoices = await queryVBGMonthlySales(year, month);
+        if (!invoices || !invoices.length) {
+            res.status(301).send();
+            return;
+        }
+        csv += invoices.map(inv => {
+            return [
+                    inv.SalesOrderNo,
+                    inv.ARDivisionNo,
+                    inv.CustomerNo,
+                    inv.customerName,
+                    inv.InvoiceNo,
+                    dayjs(inv.InvoiceDate).format('YYYY-MM-DD'),
+                    numeral(inv.salesTotal).format('0.00'),
+                    numeral(inv.freight).format('0.00'),
+                    inv.TaxSchedule,
+                    numeral(inv.SalesTaxAmt).format('0.00'),
+                    numeral(inv.total).format('0.00'),
+                    inv.TermsCodeDesc
+            ].join(',')
+        }).join('\n')
+        res.contentType('text/csv').send(csv);
+    } catch(err:unknown) {
+        if (err instanceof Error) {
+            debug("renderVBGMonthlyInvoices()", err.message);
+            res.json({error: err.message, name: err.name});
+            return;
+        }
+        res.json({error: 'unknown error in renderVBGMonthlyInvoices'});
+    }
+}
