@@ -60,7 +60,7 @@ import {
     getTerminatedRepAccounts,
     getTerminatedRepInvoices,
     getTerminatedRepOpenOrders,
-    renderTerminatedRepInvoiceReport,
+    renderTerminatedRepInvoiceReport, renderTerminatedRepOrdersEmail,
     renderTerminatedRepOrdersReport
 } from "./rep/terminated-rep-reports.js";
 import {getOpenRepOrders} from "./rep/open-orders.js";
@@ -216,6 +216,7 @@ router.get('/validate/customer/ship-to-rep.html', renderCustomerShipToAudit);
 router.get('/validate/tax-schedules', getMissingTaxSchedules);
 router.get('/validate/tax-schedules/render', renderMissingTaxSchedules);
 router.get('/validate/terminated-reps/audit-report/orders.html', renderTerminatedRepOrdersReport);
+router.get('/validate/terminated-reps/audit-report/orders.email', renderTerminatedRepOrdersEmail);
 router.get('/validate/terminated-reps/audit-report/invoices.html', renderTerminatedRepInvoiceReport);
 router.get('/validate/terminated-reps/audit-report/orders', getTerminatedRepOpenOrders);
 router.get('/validate/terminated-reps/audit-report/invoices', getTerminatedRepInvoices);
