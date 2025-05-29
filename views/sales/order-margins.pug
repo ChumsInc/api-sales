@@ -4,11 +4,12 @@ div(style="font-family: sans-serif;")
     div Options:
         div Hide EDI Orders: #{filterEDI === '1' ? 'Y' : 'N'}
         div Hide 01-PROMOS/02-SAMPLES/01-CHUMS: #{filterPromo === '1' ? 'Y' : 'N'}
+        div Hide 10-EMPLOYEE Orders: #{filterEmployee === '1' ? 'Y' : 'N'}
     div
         a(href="https://intranet.chums.com/apps/order-margins/").
             Link to full Order Margins report.
     hr
-    table(style="font-size: small" cellpadding="3" cellspacing="0")
+    table(style="font-size: small; width: 100%; max-width: 1200px" cellpadding="3" cellspacing="0")
         thead
             tr
                 th(style="padding: 0.25rem 1rem;") SO/Inv#
