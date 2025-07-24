@@ -1,6 +1,6 @@
 div(style="font-family: sans-serif;")
     h2 Order / Invoice Margin Alert (threshold #{Number(maxMargin * 100).toFixed(0)}%)
-    h3 Includes Orders and Credit Memos updated since #{!!since ? format(new Date(since), 'MM/dd hh:mm bbb') : 'N/A'}
+    h3 Includes Orders and Credit Memos updated since #{!!since && dayjs ? dayjs(since).format('MM/DD hh:mm a') : 'N/A'}
     div Options:
         div Hide EDI Orders: #{filterEDI === '1' ? 'Y' : 'N'}
         div Hide 01-PROMOS/02-SAMPLES/01-CHUMS: #{filterPromo === '1' ? 'Y' : 'N'}
@@ -34,7 +34,7 @@ div(style="font-family: sans-serif;")
                     td(style="padding: 0.25rem 1rem;") #{salesorder.ARDivisionNo}-#{salesorder.CustomerNo}
                     td(style="padding: 0.25rem 1rem;") #{salesorder.BillToName}
                     td(style="padding: 0.25rem 1rem;") #{salesorder.CreatedBy}
-                    td(style="padding: 0.25rem 1rem;") #{!!shipDate ? format(shipDate, 'MM/dd') : 'N/A'}
+                    td(style="padding: 0.25rem 1rem;") #{!!shipDate ? dayjs(shipDate).format('MM/DD') : 'N/A'}
                     td(style="padding: 0.25rem 1rem; text-align: right") #{numeral(salesorder.OrderTotal).format('0,0.00')}
                     td(style="padding: 0.25rem 1rem; text-align: right") #{numeral(salesorder.ItemTotal).format('0,0.00')}
                     td(style="padding: 0.25rem 1rem;text-align: right") #{numeral(salesorder.CostTotal).format('0,0.00')}
@@ -48,7 +48,7 @@ div(style="font-family: sans-serif;")
                     td(style="padding: 0.25rem 1rem;") #{inv.ARDivisionNo}-#{inv.CustomerNo}
                     td(style="padding: 0.25rem 1rem;") #{inv.BillToName}
                     td(style="padding: 0.25rem 1rem;") N/A
-                    td(style="padding: 0.25rem 1rem;") #{format(shipDate, 'MM/dd')}
+                    td(style="padding: 0.25rem 1rem;") #{dayjs(shipDate).format('MM/dd')}
                     td(style="padding: 0.25rem 1rem; text-align: right") #{numeral(inv.InvoiceTotal).format('0,0.00')}
                     td(style="padding: 0.25rem 1rem; text-align: right") #{numeral(inv.ItemTotal).format('0,0.00')}
                     td(style="padding: 0.25rem 1rem;text-align: right") #{numeral(inv.CostTotal).format('0,0.00')}
