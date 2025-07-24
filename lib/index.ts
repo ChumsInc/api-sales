@@ -1,7 +1,7 @@
 import Debug from 'debug';
-import {Router, Request, Response, NextFunction} from 'express';
+import {Router} from 'express';
 import {ValidatedUserProfile} from 'chums-types'
-import {deprecationNotice, validateRole, validateUser} from 'chums-local-modules';
+import {deprecationNotice, logPath, validateRole, validateUser} from 'chums-local-modules';
 import {default as analysisRouter} from './analysis/index.js';
 
 import {getSalesByBillToState, getSalesByShipToState} from './sales-map/index.js';
@@ -34,7 +34,7 @@ import {
     renderMissingTaxSchedules
 } from './account/index.js';
 import {getInvoice} from "./account/invoice.js";
-import {getCustomerItemSales, customerItemSalesXLSX} from './customer-item-sales/index.js';
+import {customerItemSalesXLSX, getCustomerItemSales} from './customer-item-sales/index.js';
 import {getAccountOpenOrders} from "./salesorder/account-orders.js";
 import {getOpenItems} from "./salesorder/open-items.js";
 import {getSafetyRepInvoices} from "./rep/safety-invoices.js";
@@ -60,7 +60,8 @@ import {
     getTerminatedRepAccounts,
     getTerminatedRepInvoices,
     getTerminatedRepOpenOrders,
-    renderTerminatedRepInvoiceReport, renderTerminatedRepOrdersEmail,
+    renderTerminatedRepInvoiceReport,
+    renderTerminatedRepOrdersEmail,
     renderTerminatedRepOrdersReport
 } from "./rep/terminated-rep-reports.js";
 import {getOpenRepOrders} from "./rep/open-orders.js";
@@ -70,11 +71,9 @@ import {getAging} from "./aging/index.js";
 import {getCustomerShipToAudit, renderCustomerShipToAudit} from "./audits/customer/ship-to-rep.js";
 import {getAvailableCustomerNumbers} from "./cs/available-customer-numbers.js";
 import {getCustomerRenameHistory, renderCustomerRenameHistory} from "./account/customer-rename-history.js";
-import {getExistingOpticalRows} from "./utils/fix-optical.js";
 import {postRenumberCustomer} from "./utils/renumber-customer/index.js";
 
-import {renderVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
-import {downloadVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
+import {downloadVBGMonthlyInvoices, renderVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
 
 const debug = Debug('chums:lib');
 const router = Router();
@@ -90,16 +89,8 @@ declare global {
     }
 }
 
-
-function logPath(req:Request, res:Response, next:NextFunction) {
-    const user = res.locals.profile?.user?.email || res.locals.profile?.user?.id || '-';
-    debug(req.ip, user, req.method, req.originalUrl, req.get('referer'));
-    res.locals.response = {};
-    next();
-}
-
 router.use(validateUser);
-router.use(logPath);
+router.use(logPath(debug));
 
 router.get('/about.json', aboutAPI);
 
