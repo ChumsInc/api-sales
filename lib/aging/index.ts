@@ -7,10 +7,11 @@ const debug = Debug('chums:lib:aging');
 export const getAging = async (req:Request, res:Response):Promise<void> => {
     try {
         const userId = res.locals.profile?.user?.id ?? 0;
+        const [salespersonDivisionNo, salespersonNo] = req.params.salespersonSlug?.split('-') ?? [];
         const args:LoadRepAgingArgs = {
             userId,
-            salespersonDivisionNo: req.params.SalespersonDivisionNo,
-            salespersonNo: req.params.SalespersonNo
+            salespersonDivisionNo: salespersonDivisionNo ?? req.params.SalespersonDivisionNo,
+            salespersonNo: salespersonNo ?? req.params.SalespersonNo
         };
         const reps = await loadRepAging(args);
         const accounts = await loadRepCustomerAging(args);

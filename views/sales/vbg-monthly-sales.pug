@@ -1,0 +1,53 @@
+-const newDate = new Date()
+-const month = newDate.getMonth()
+-const year = newDate.getFullYear()
+div(style=" font-family: sans-serif;")
+    div
+        div(style="display: inline-block; padding-right: 2em")
+            img(src="https://intranet.chums.com/images/chums-logo-badge-400px.png"
+                alt="CHUMS"
+                width="200" height="90.5"
+                style="width: 100%; max-width: 200px; height: 80px;")
+        div(style="display: inline-block")
+            h2(style="font-weight: bold") VBG Monthly Sales
+            h3 Monthly Sales Invoices for #{year}-#{month}
+    button(style="background-color: #e31937; border-radius: 5px")
+        a(href="https://intranet.chums.com/api/sales/monthly-sales/vbg-monthly-sales/download.csv"
+            style="text-decoration: none; color: white;") Download
+
+    hr
+
+    table(cellpadding="3" cellspacing="0")
+        thead
+            tr
+                th Sales Order No
+                th AR Division No
+                th Customer No
+                th Customer Name
+                th Invoice No
+                th Invoice Date
+                th(style="padding: 0.25rem 1rem;text-align: right") Sales Total
+                th(style="padding: 0.25rem 1rem;text-align: right") Freight
+                th Tax Schedule
+                th(style="padding: 0.25rem 1rem;text-align: right") Sales Tax Amount
+                th(style="padding: 0.25rem 1rem;text-align: right") Total
+                th Terms Code Desc
+
+        tbody
+             for row in invoices
+                 tr
+                     td(style="padding: 0.25rem 1rem;text-align: right") #{row.SalesOrderNo}
+                     td(style="padding: 0.25rem 1rem;text-align: right") #{row.ARDivisionNo}
+                     td #{row.CustomerNo}
+                     td #{row.CustomerName}
+                     td(style="padding: 0.25rem 1rem;text-align: right") #{row.InvoiceNo}
+                     td(style="padding: 0.25rem 1rem;text-align: right") #{row.InvoiceDate}
+                     td(style="padding: 0.25rem 1rem;text-align: right") #{row.salesTotal}
+                     td(style="padding: 0.25rem 1rem;text-align: right") #{row.freight}
+                     td #{row.TaxSchedule}
+                     td(style="padding: 0.25rem 1rem;text-align: right") #{row.SalesTaxAmt}
+                     td(style="padding: 0.25rem 1rem;text-align: right") #{row.total}
+                     td #{row.TermsCodeDesc}
+
+    hr
+div

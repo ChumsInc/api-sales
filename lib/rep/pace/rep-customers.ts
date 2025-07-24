@@ -3,6 +3,7 @@ import {mysql2Pool} from "chums-local-modules";
 import {RowDataPacket} from "mysql2";
 import {Decimal} from "decimal.js";
 import Debug from "debug";
+import {calcGrowthRate, calcPace} from "./utils.js";
 
 const debug = Debug('chums:lib:rep:pace:rep-customers');
 
@@ -164,6 +165,7 @@ const managedCustomersSQL = `
 
 export async function loadManagedCustomers({Company, SalespersonDivisionNo, SalespersonNo, maxDate, minDate, groupByCustomer}:LoadRepPaceProps):Promise<CustomerRow[]> {
     try {
+        debug('loadManagedCustomers()', SalespersonDivisionNo, SalespersonNo);
         const [repCustomers] = await mysql2Pool.query<(CustomerRow & RowDataPacket)[]>(managedCustomersSQL, {
             Company,
             SalespersonDivisionNo,
@@ -174,15 +176,16 @@ export async function loadManagedCustomers({Company, SalespersonDivisionNo, Sale
         });
         // return repCustomers;
         return repCustomers.map(row => {
-            const rate = new Decimal(row.InvPYTD).eq(0)
+            const rate = calcGrowthRate(row.InvCYTD, row.InvPYTD);
+            const _rate = new Decimal(row.InvPYTD).eq(0)
                 ? (new Decimal(row.InvCYTD).lte(0) ? 0 : 1)
-                : new Decimal(row.InvCYTD).sub(row.InvPYTD).div(row.InvPYTD).toDecimalPlaces(4).toString();
+                : (new Decimal(row.InvCYTD).sub(row.InvPYTD).div(row.InvPYTD).toDecimalPlaces(4).toString());
             const pace = new Decimal(row.InvPY).eq(0)
                 ? new Decimal(row.InvCYTD).add(row.OpenOrders).toDecimalPlaces(4).toString()
-                : new Decimal(rate).add(1).times(row.InvPY).toDecimalPlaces(4).toString()
+                : calcPace(row.InvPY, rate).toDecimalPlaces(4).toString(); //new Decimal(rate).add(1).times(row.InvPY).toDecimalPlaces(4).toString()
             return {
                 ...row,
-                rate,
+                rate: rate.toDecimalPlaces(4).toString(),
                 pace
             }
         })

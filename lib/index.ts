@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import {Router, Request, Response, NextFunction} from 'express';
 import {ValidatedUserProfile} from 'chums-types'
-import {validateRole, validateUser} from 'chums-local-modules';
+import {deprecationNotice, validateRole, validateUser} from 'chums-local-modules';
 import {default as analysisRouter} from './analysis/index.js';
 
 import {getSalesByBillToState, getSalesByShipToState} from './sales-map/index.js';
@@ -34,7 +34,7 @@ import {
     renderMissingTaxSchedules
 } from './account/index.js';
 import {getInvoice} from "./account/invoice.js";
-import {getCustomerItemSales} from './customer-item-sales/index.js';
+import {getCustomerItemSales, customerItemSalesXLSX} from './customer-item-sales/index.js';
 import {getAccountOpenOrders} from "./salesorder/account-orders.js";
 import {getOpenItems} from "./salesorder/open-items.js";
 import {getSafetyRepInvoices} from "./rep/safety-invoices.js";
@@ -74,6 +74,7 @@ import {getExistingOpticalRows} from "./utils/fix-optical.js";
 import {postRenumberCustomer} from "./utils/renumber-customer/index.js";
 
 import {renderVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
+import {downloadVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
 
 const debug = Debug('chums:lib');
 const router = Router();
@@ -100,17 +101,28 @@ function logPath(req:Request, res:Response, next:NextFunction) {
 router.use(validateUser);
 router.use(logPath);
 
-router.get('/about', aboutAPI);
-router.get('/account-list/bill-to', validateRole(['sales', 'rep']), getAccountList);
-router.post('/account-list/bill-to/render', validateRole(['sales', 'rep']), renderAccountList);
-router.post('/account-list/bill-to/xlsx', validateRole(['sales', 'rep']), renderAccountListXLSX);
+router.get('/about.json', aboutAPI);
 
-router.get('/account-list/ship-to', validateRole(['sales', 'rep']), getShipToAccountList);
-router.post('/account-list/ship-to/render', validateRole(['sales', 'rep']), renderShipToAccountList);
-router.post('/account-list/ship-to/xlsx', validateRole(['sales', 'rep']), renderShipToAccountListXLSX);
+router.get('/account-list/bill-to.json', validateRole(['sales', 'rep']), getAccountList);
+router.post('/account-list/bill-to.html', validateRole(['sales', 'rep']), renderAccountList);
+router.post('/account-list/bill-to.xlsx', validateRole(['sales', 'rep']), renderAccountListXLSX);
+router.get('/account-list/ship-to.json', validateRole(['sales', 'rep']), getShipToAccountList);
+router.post('/account-list/ship-to.html', validateRole(['sales', 'rep']), renderShipToAccountList);
+router.post('/account-list/ship-to.xlsx', validateRole(['sales', 'rep']), renderShipToAccountListXLSX);
 
-router.get('/aging', getAging);
-router.get('/aging/:SalespersonDivisionNo-:SalespersonNo', getAging);
+
+router.get('/account-list/bill-to', validateRole(['sales', 'rep']), deprecationNotice, getAccountList);
+router.post('/account-list/bill-to/render', validateRole(['sales', 'rep']), deprecationNotice, renderAccountList);
+router.post('/account-list/bill-to/xlsx', validateRole(['sales', 'rep']), deprecationNotice, renderAccountListXLSX);
+
+router.get('/account-list/ship-to', validateRole(['sales', 'rep']), deprecationNotice, getShipToAccountList);
+router.post('/account-list/ship-to/render', validateRole(['sales', 'rep']), deprecationNotice, renderShipToAccountList);
+router.post('/account-list/ship-to/xlsx', validateRole(['sales', 'rep']), deprecationNotice, renderShipToAccountListXLSX);
+
+router.get('/aging.json', getAging);
+router.get('/aging', deprecationNotice, getAging);
+router.get('/aging/:salespersonSlug.json', getAging);
+router.get('/aging/:SalespersonDivisionNo-:SalespersonNo', deprecationNotice, getAging);
 
 
 router.use('/analysis', validateRole('sales'), analysisRouter);
@@ -134,7 +146,7 @@ router.get('/customer-types/:ARDivisionNo(\\d{2})/:CustomerType', getCustomersBy
 router.get('/commission/:company(chums|bc)/:minDate/:maxDate', validateRole(['commission']), getCommissionTotals);
 router.get('/commission/:company(chums|bc)/:minDate/:maxDate/:SalespersonDivisionNo-:SalespersonNo', validateRole(['commission']), getRepCommissionDetail);
 
-
+router.get('/customer/items.json', customerItemSalesXLSX)
 router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ARDivisionNo-:CustomerNo/:ItemCode?', getCustomerItemSales);
 router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ItemCode?', getCustomerItemSales);
 router.get('/customer/renumber/:from/:to/test.json', postRenumberCustomer);
@@ -152,6 +164,7 @@ router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo/count', getAccountInvoi
 router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo', getAccountInvoices);
 
 router.get('/monthly-sales/vbg-monthly-sales.csv', renderVBGMonthlyInvoices);
+router.get('/monthly-sales/vbg-monthly-sales/download.csv', downloadVBGMonthlyInvoices);
 
 router.get('/orders/items/:company(chums|bc)/:ARDivisionNo-:CustomerNo', getOpenItems);
 router.get('/orders/margins/:company(chums|bc)/:salesOrderNo([\\S]{7})', getOrderItemMargins);
