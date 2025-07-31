@@ -155,8 +155,8 @@ async function loadOpenOrders({arDivisionNo, customerNo, salesOrderNo, userId}:L
                                               a.CustomerNo = h.CustomerNo AND a.ShipToCode = ifnull(h.ShipToCode, '')
                                 LEFT JOIN c2.ar_termscode tc
                                           ON tc.Company = h.Company AND tc.TermsCode = h.TermsCode
-                                LEFT JOIN c2.sy_user u
-                                          ON u.userkey = h.UserCreatedKey
+                                LEFT JOIN c2.SY_User u
+                                          ON u.UserKey = h.UserCreatedKey
                        WHERE h.Company = 'chums'
                          AND (h.ARDivisionNo = :arDivisionNo OR h.BillToDivisionNo = :arDivisionNo)
                          AND (h.CustomerNo = :customerNo OR BillToCustomerNo = :customerNo)
