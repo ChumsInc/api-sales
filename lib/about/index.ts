@@ -1,31 +1,47 @@
-import {readFile, stat} from 'node:fs/promises';
+import {readFile} from 'node:fs/promises';
 import {Request, Response} from 'express';
 import Debug from 'debug';
+import process from "node:process";
+import dayjs from "dayjs";
+import duration from 'dayjs/plugin/duration.js';
+
+dayjs.extend(duration);
 
 const debug = Debug('chums:lib:about');
+
 export interface PackageJSON {
     name: string;
     version: string;
 }
 
-export const aboutAPI = async (req:Request, res:Response) => {
+async function loadVersion(): Promise<string> {
+    let version = '';
     try {
-        let version = '0.0.0';
-        try {
-            const contents = await readFile('./package.json');
-            if (contents) {
-                const json:PackageJSON = JSON.parse(contents.toString());
-                version = json?.version ?? 'unknown version';
-            }
-        } catch(err:unknown) {
-            if (err instanceof Error) {
-                version = err.message;
-            } else {
-                version = 'error in aboutAPI'
-            }
+        const contents = await readFile('./package.json');
+        if (contents) {
+            const json: PackageJSON = JSON.parse(contents.toString());
+            version = json?.version ?? 'unknown version';
         }
-        res.json({site: '/api/sales', version});
-    } catch(err) {
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            version = err.message;
+        } else {
+            version = 'error in aboutAPI'
+        }
+    }
+    return version;
+}
+
+export const aboutAPI = async (req: Request, res: Response) => {
+    try {
+        const version = await loadVersion();
+        res.json({
+            site: '/api/sales',
+            version,
+            node: process.version,
+            uptime: dayjs.duration(process.uptime()).toISOString(),
+        });
+    } catch (err) {
         if (err instanceof Error) {
             debug("aboutAPI()", err.message);
             return Promise.reject(err);
