@@ -1,6 +1,6 @@
 -const newDate = new Date()
--const month = newDate.getMonth()
--const year = newDate.getFullYear()
+- const params = new URLSearchParams({year: year, month:month})
+- const downloadUrl = "https://intranet.chums.com/api/sales/monthly-sales/vbg-monthly-sales/download.csv?" + params.toString();
 div(style=" font-family: sans-serif;")
     div
         div(style="display: inline-block; padding-right: 2em")
@@ -12,7 +12,7 @@ div(style=" font-family: sans-serif;")
             h2(style="font-weight: bold") VBG Monthly Sales
             h3 Monthly Sales Invoices for #{year}-#{month}
     button(style="background-color: #e31937; border-radius: 5px")
-        a(href="https://intranet.chums.com/api/sales/monthly-sales/vbg-monthly-sales/download.csv"
+        a(href=downloadUrl
             style="text-decoration: none; color: white;") Download
 
     hr

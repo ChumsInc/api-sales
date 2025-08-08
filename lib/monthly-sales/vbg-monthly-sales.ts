@@ -61,7 +61,11 @@ export const queryVBGMonthlySales = async (year: string, month: string):Promise<
             where year(ihh.InvoiceDate) = :year
               and month(ihh.InvoiceDate) = :month
               and ihh.InvoiceType <> 'XD'
-              and ihh.CustomerNo = 'NJ0001'
+              and (
+                (ihh.BillToDivisionNo = '04' and ihh.BillToCustomerNo = 'NJ0001')
+                    OR (ihh.ARDivisionNo = '04' and ihh.CustomerNo = 'NJ0001')
+                )
+              and ihh.Company = 'chums'
             order by ihh.InvoiceNo;
         `
         const [rows] = await mysql2Pool.query<VBGMonthSalesRow[]>(sql, {year, month});
@@ -130,7 +134,7 @@ export const renderVBGMonthlyInvoices = async (req: Request, res: Response) => {
             InvoiceDate:  dayjs(inv.InvoiceDate).format('YYYY-MM-DD')
         }))
         const html = await new Promise((resolve, reject) => {
-            res.render('sales/vbg-monthly-sales.pug', {invoices: _renderedInvoices}, (err: Error, html: string) => {
+            res.render('sales/vbg-monthly-sales.pug', {invoices: _renderedInvoices, year, month}, (err: Error, html: string) => {
                 if (err) {
                     reject(err)
                 }

@@ -154,7 +154,7 @@ router.get('/invoice/:Company/:InvoiceNo', getInvoice);
 router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo/count', getAccountInvoiceCount);
 router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo', getAccountInvoices);
 
-router.get('/monthly-sales/vbg-monthly-sales.csv', renderVBGMonthlyInvoices);
+router.get('/monthly-sales/vbg-monthly-sales.html', renderVBGMonthlyInvoices);
 router.get('/monthly-sales/vbg-monthly-sales/download.csv', downloadVBGMonthlyInvoices);
 
 router.get('/orders/items/:company(chums|bc)/:ARDivisionNo-:CustomerNo', getOpenItems);
