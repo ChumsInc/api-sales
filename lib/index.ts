@@ -66,7 +66,7 @@ import {
 } from "./rep/terminated-rep-reports.js";
 import {getOpenRepOrders} from "./rep/open-orders.js";
 import {aboutAPI} from "./about/index.js";
-import {getRepMismatch, renderRepMismatch} from "./audits/sales-order/rep-mismatch.js";
+import {getRepMismatch, renderRepMismatch, renderRepMismatchEmail} from "./audits/sales-order/rep-mismatch/index.js";
 import {getAging} from "./aging/index.js";
 import {getCustomerShipToAudit, renderCustomerShipToAudit} from "./audits/customer/ship-to-rep.js";
 import {getAvailableCustomerNumbers} from "./cs/available-customer-numbers.js";
@@ -122,6 +122,7 @@ router.get('/audit/customers/rename-history.html', renderCustomerRenameHistory);
 router.get('/audit/customers/rename-history.json', getCustomerRenameHistory);
 router.get('/audit/sales-orders/rep-mismatch.json', getRepMismatch);
 router.get('/audit/sales-orders/rep-mismatch.html', renderRepMismatch);
+router.get('/audit/sales-orders/rep-mismatch.email', renderRepMismatchEmail);
 
 router.use('/b2b', b2bRouter);
 
