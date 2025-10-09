@@ -78,7 +78,6 @@ import {getCustomerRenameHistory, renderCustomerRenameHistory} from "./account/c
 import {postRenumberCustomer} from "./utils/renumber-customer/index.js";
 
 import {downloadVBGMonthlyInvoices, renderVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
-import {getCustomerItemSales} from "./customer-item-sales/legacy-handler.js";
 
 const debug = Debug('chums:lib');
 const router = Router();
@@ -133,32 +132,30 @@ router.use('/b2b', b2bRouter);
 
 router.get('/cs/available-customer-numbers.json', getAvailableCustomerNumbers);
 
-router.get('/census-audit/:minDate(\\d{4}-\\d{2}-\\d{2})-:maxDate(\\d{4}-\\d{2}-\\d{2})', getCensusAudit);
-router.get('/census-audit/:minDate(\\d{4}-\\d{2}-\\d{2})-:maxDate(\\d{4}-\\d{2}-\\d{2}).xlsx', getCensusAuditXLSX);
+router.get('/census-audit.json', getCensusAudit);
+router.get('/census-audit.xlsx', getCensusAuditXLSX);
 
 
 router.get('/customer-types', getCustomerTypes);
-router.get('/customer-types/:ARDivisionNo(\\d{2})/:CustomerType', getCustomersByType);
+router.get('/customer-types/:ARDivisionNo/:CustomerType', getCustomersByType);
 
-router.get('/commission/:company(chums|bc)/:minDate/:maxDate', validateRole(['commission']), getCommissionTotals);
-router.get('/commission/:company(chums|bc)/:minDate/:maxDate/:SalespersonDivisionNo-:SalespersonNo', validateRole(['commission']), getRepCommissionDetail);
+router.get('/commission/:company/:minDate/:maxDate', validateRole(['commission']), getCommissionTotals);
+router.get('/commission/:company/:minDate/:maxDate/:SalespersonDivisionNo-:SalespersonNo', validateRole(['commission']), getRepCommissionDetail);
 
 router.get('/customer/items.json', getCustomerItemSalesJSON)
 router.get('/customer/items.xlsx.json', getCustomerItemSalesData);
 router.get('/customer/items.xlsx', customerItemSalesXLSX);
-router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ARDivisionNo-:CustomerNo/:ItemCode?', deprecationNotice, getCustomerItemSales);
-router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ItemCode?', deprecationNotice, getCustomerItemSales);
 
 router.get('/customer/renumber/:from/:to/test.json', postRenumberCustomer);
 router.post('/customer/renumber/:from/:to/exec.json', postRenumberCustomer);
 
-router.get('/gdpr/:Company(chums|bc)/:SalesOrderNo', getGDPRSORequest);
-router.post('/gdpr/:Company(chums|bc)/:SalesOrderNo', execGDPRSORequest);
-router.post('/gdpr/:company(chums|bc)', execGDPRRequest);
+router.get('/gdpr/:Company/:SalesOrderNo', getGDPRSORequest);
+router.post('/gdpr/:Company/:SalesOrderNo', execGDPRSORequest);
+router.post('/gdpr/:company', execGDPRRequest);
 router.get('/history-graph/:Company', getHistoryGraphData);
 
 router.get('/invoice/:Company/:ARDivisionNo-:CustomerNo/:InvoiceNo', getInvoice);
-router.get('/invoice/:Company/:InvoiceType(AD|CA|CM|DM|IN)/:InvoiceNo', getInvoice);
+router.get('/invoice/:Company/:InvoiceType/:InvoiceNo', getInvoice);
 router.get('/invoice/:Company/:InvoiceNo', getInvoice);
 router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo/count', getAccountInvoiceCount);
 router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo', getAccountInvoices);
@@ -166,14 +163,14 @@ router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo', getAccountInvoices);
 router.get('/monthly-sales/vbg-monthly-sales.html', renderVBGMonthlyInvoices);
 router.get('/monthly-sales/vbg-monthly-sales/download.csv', downloadVBGMonthlyInvoices);
 
-router.get('/orders/items/:company(chums|bc)/:ARDivisionNo-:CustomerNo', getOpenItems);
-router.get('/orders/margins/:company(chums|bc)/:salesOrderNo([\\S]{7})', getOrderItemMargins);
-router.get('/orders/margins/:company(chums|bc)/:maxMargin([0-9\\.]+)?', getOrderMargins);
-router.get('/orders/margins/:company(chums|bc)/:maxMargin([0-9\\.]+)/cm', getCMMargins);
-router.get('/orders/margins/:company(chums|bc)/:maxMargin([0-9\\.]+)/render', renderOrderMargins);
+router.get('/orders/items/:company/:ARDivisionNo-:CustomerNo', getOpenItems);
+router.get('/orders/margins/:company/:salesOrderNo', getOrderItemMargins);
+router.get('/orders/margins/:company/:maxMargin([0-9\\.]+)?', getOrderMargins);
+router.get('/orders/margins/:company/:maxMargin([0-9\\.]+)/cm', getCMMargins);
+router.get('/orders/margins/:company/:maxMargin([0-9\\.]+)/render', renderOrderMargins);
 router.get('/orders/open/:company/:ARDivisionNo(\\d{2})-:CustomerNo', getAccountOpenOrders)
 router.get('/orders/open/:company/:salesOrderNo', getOpenSalesOrder);
-router.get('/orders/status/:Company(chums|bc)/:dateType(od|sd)/:minDate/:maxDate', getOrderStatusList);
+router.get('/orders/status/:Company/:dateType(od|sd)/:minDate/:maxDate', getOrderStatusList);
 router.get('/orders/:company/:salesOrderNo', getSalesOrder);
 
 
@@ -184,32 +181,32 @@ router.get('/orders/:company/:salesOrderNo', getSalesOrder);
 router.use('/pace', paceRouter);
 
 
-router.get('/pricing/:Company(chums|bc)/pricelevels', validateRole(['cost']), getPriceLevels);
-router.post('/pricing/:Company(chums|bc)/pricelevels/sort', validateRole(['cost']), postPriceLevelSort);
-router.get('/pricing/:Company(chums|bc)/pricelevels/:CustomerPriceLevel', validateRole(['cost']), getPriceLevel);
-router.post('/pricing/:Company(chums|bc)/pricelevels/:CustomerPriceLevel', validateRole(['cost']), postPriceLevel);
-router.get('/pricing/:Company(chums|bc)/pricecodes', validateRole(['cost']), getPriceCodes);
-router.get('/pricing/:Company(chums|bc)/pricecodes/:PriceCode', validateRole(['cost']), getPriceCode);
-router.get('/pricing/:Company(chums|bc)/pricecodes/:PriceCode/:CustomerPriceLevel', validateRole(['cost']), getPriceCode);
-router.get('/pricing/:Company(chums|bc)/changes/', validateRole(['cost']), getPriceChangeUsers);
-router.get('/pricing/:Company(chums|bc)/changes/:UserName.txt', validateRole(['cost']), getUserChangesImport);
-router.get('/pricing/:Company(chums|bc)/changes/:UserName', validateRole(['cost']), getUserPriceChanges);
-router.get('/pricing/:Company(chums|bc)/:PriceCode/:CustomerPriceLevel?', validateRole(['cost']), getPriceCode);
-router.get('/pricing/:Company(chums|bc)', validateRole(['cost']), getAllPricing);
-router.post('/pricing/:Company(chums|bc)/:PriceCode/:CustomerPriceLevel', validateRole(['cost']), postNewPricing);
-router.delete('/pricing/:Company(chums|bc)/:PriceCode/:CustomerPriceLevel', validateRole(['cost']), delNewPricingEntry);
+router.get('/pricing/:Company/pricelevels', validateRole(['cost']), getPriceLevels);
+router.post('/pricing/:Company/pricelevels/sort', validateRole(['cost']), postPriceLevelSort);
+router.get('/pricing/:Company/pricelevels/:CustomerPriceLevel', validateRole(['cost']), getPriceLevel);
+router.post('/pricing/:Company/pricelevels/:CustomerPriceLevel', validateRole(['cost']), postPriceLevel);
+router.get('/pricing/:Company/pricecodes', validateRole(['cost']), getPriceCodes);
+router.get('/pricing/:Company/pricecodes/:PriceCode', validateRole(['cost']), getPriceCode);
+router.get('/pricing/:Company/pricecodes/:PriceCode/:CustomerPriceLevel', validateRole(['cost']), getPriceCode);
+router.get('/pricing/:Company/changes/', validateRole(['cost']), getPriceChangeUsers);
+router.get('/pricing/:Company/changes/:UserName.txt', validateRole(['cost']), getUserChangesImport);
+router.get('/pricing/:Company/changes/:UserName', validateRole(['cost']), getUserPriceChanges);
+router.get('/pricing/:Company/:PriceCode/:CustomerPriceLevel?', validateRole(['cost']), getPriceCode);
+router.get('/pricing/:Company', validateRole(['cost']), getAllPricing);
+router.post('/pricing/:Company/:PriceCode/:CustomerPriceLevel', validateRole(['cost']), postNewPricing);
+router.delete('/pricing/:Company/:PriceCode/:CustomerPriceLevel', validateRole(['cost']), delNewPricingEntry);
 
 
-router.get('/rep/account-list/:Company(chums|bc)/totals/:asOfDate(\\d{4}-\\d{2}-\\d{2})?', getRepTotals);
-router.get('/rep/account-list/:Company(chums|bc)/:SalespersonNo([0-9A-Z]+)/:asOfDate(\\d{4}-\\d{2}-\\d{2})?', getRepAccounts);
-router.get('/rep/account-list/:Company(chums|bc)/:SalespersonNo([0-9A-Z]+)/:asOfDate(\\d{4}-\\d{2}-\\d{2})/xlsx', getRepAccountsXLSX);
-router.get('/rep/account-orders/:Company(chums|bc)/:SalespersonNo([0-9A-Z]+)', getRepOrders);
+router.get('/rep/account-list/:Company/totals/:asOfDate(\\d{4}-\\d{2}-\\d{2})?', getRepTotals);
+router.get('/rep/account-list/:Company/:SalespersonNo([0-9A-Z]+)/:asOfDate(\\d{4}-\\d{2}-\\d{2})?', getRepAccounts);
+router.get('/rep/account-list/:Company/:SalespersonNo([0-9A-Z]+)/:asOfDate(\\d{4}-\\d{2}-\\d{2})/xlsx', getRepAccountsXLSX);
+router.get('/rep/account-orders/:Company/:SalespersonNo([0-9A-Z]+)', getRepOrders);
 
 router.get('/rep/list/:company(chums|bc|CHI|BCS)', getRepList);
 router.get('/rep/list/:company(chums|bc|CHI|BCS)/condensed', getCondensedRepList);
 router.get('/rep/list/:company/:userid(\\d+)', getUserRepList);
 
-router.get('/rep/safety/invoices/:company(chums|bc)/:SalespersonDivisionNo-:SalespersonNo/:minDate/:maxDate', validateRep, getSafetyRepInvoices);
+router.get('/rep/safety/invoices/:company/:SalespersonDivisionNo-:SalespersonNo/:minDate/:maxDate', validateRep, getSafetyRepInvoices);
 
 router.get('/rep/managers/:Company/:SalespersonDivisionNo-:SalespersonNo', getRepManagers);
 router.get('/rep/managers/:Company', getRepManagers);
