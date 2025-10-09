@@ -34,7 +34,11 @@ import {
     renderMissingTaxSchedules
 } from './account/index.js';
 import {getInvoice} from "./account/invoice.js";
-import {customerItemSalesXLSX, getCustomerItemSales} from './customer-item-sales/index.js';
+import {
+    customerItemSalesXLSX,
+    getCustomerItemSalesData,
+    getCustomerItemSalesJSON
+} from './customer-item-sales/index.js';
 import {getAccountOpenOrders} from "./salesorder/account-orders.js";
 import {getOpenItems} from "./salesorder/open-items.js";
 import {getSafetyRepInvoices} from "./rep/safety-invoices.js";
@@ -74,6 +78,7 @@ import {getCustomerRenameHistory, renderCustomerRenameHistory} from "./account/c
 import {postRenumberCustomer} from "./utils/renumber-customer/index.js";
 
 import {downloadVBGMonthlyInvoices, renderVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
+import {getCustomerItemSales} from "./customer-item-sales/legacy-handler.js";
 
 const debug = Debug('chums:lib');
 const router = Router();
@@ -138,9 +143,12 @@ router.get('/customer-types/:ARDivisionNo(\\d{2})/:CustomerType', getCustomersBy
 router.get('/commission/:company(chums|bc)/:minDate/:maxDate', validateRole(['commission']), getCommissionTotals);
 router.get('/commission/:company(chums|bc)/:minDate/:maxDate/:SalespersonDivisionNo-:SalespersonNo', validateRole(['commission']), getRepCommissionDetail);
 
-router.get('/customer/items.json', customerItemSalesXLSX)
-router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ARDivisionNo-:CustomerNo/:ItemCode?', getCustomerItemSales);
-router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ItemCode?', getCustomerItemSales);
+router.get('/customer/items.json', getCustomerItemSalesJSON)
+router.get('/customer/items.xlsx.json', getCustomerItemSalesData);
+router.get('/customer/items.xlsx', customerItemSalesXLSX);
+router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ARDivisionNo-:CustomerNo/:ItemCode?', deprecationNotice, getCustomerItemSales);
+router.get('/customer/items/:FiscalCalYear/:company(chums|bc)/:ItemCode?', deprecationNotice, getCustomerItemSales);
+
 router.get('/customer/renumber/:from/:to/test.json', postRenumberCustomer);
 router.post('/customer/renumber/:from/:to/exec.json', postRenumberCustomer);
 
