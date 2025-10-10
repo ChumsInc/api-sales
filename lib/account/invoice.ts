@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import {apiFetchJSON, getDBCompany, getSageCompany, mysql2Pool, validateUserAccount} from 'chums-local-modules';
+import {apiFetchJSON, mysql2Pool, ValidatedUser, validateUserAccount} from 'chums-local-modules';
 import {
     ExtendedInvoice,
     InvoiceHistoryDetail,
@@ -7,19 +7,17 @@ import {
     InvoicePaymentRecord,
     InvoiceTrackingRecord,
     PaperlessLogRow,
-    ProductImage,
     User
 } from 'chums-types';
 import {RowDataPacket} from "mysql2";
 import {Request, Response} from "express";
-import {ExtendedInvoiceResponse, ImageListResponse} from "./types.js";
+import {ExtendedInvoiceResponse} from "./types.js";
 import {loadImages} from "../utils/images.js";
 
 const debug = Debug('chums:lib:account:invoice');
 
-async function loadInvoiceHistoryHeader({userId, Company, InvoiceNo}: {
+async function loadInvoiceHistoryHeader({userId, InvoiceNo}: {
     userId: number | string;
-    Company: string;
     InvoiceNo: string;
 }): Promise<InvoiceHistoryHeader | null> {
     try {
@@ -104,13 +102,12 @@ async function loadInvoiceHistoryHeader({userId, Company, InvoiceNo}: {
                                            oi.InvoiceType = h.InvoiceType
                               LEFT JOIN c2.SY_User u
                                         ON u.UserKey = h.UserCreatedKey
-                     WHERE h.Company = :Company
+                     WHERE h.Company = 'chums'
                        AND h.InvoiceNo = :InvoiceNo
                        AND h.InvoiceType <> 'XD'`;
-        const args = {Company, InvoiceNo, userid: userId, api_id: +userId * -1};
+        const args = {InvoiceNo, userid: userId, api_id: +userId * -1};
         const [rows] = await mysql2Pool.query<(InvoiceHistoryHeader & RowDataPacket)[]>(sql, args);
-        const [invoice] = rows;
-        return invoice || null;
+        return rows[0] ?? null;
     } catch (err) {
         if (err instanceof Error) {
             debug("loadInvoiceHeader()", err.message);
@@ -121,8 +118,7 @@ async function loadInvoiceHistoryHeader({userId, Company, InvoiceNo}: {
     }
 }
 
-async function loadInvoiceDetail({Company, InvoiceNo, HeaderSeqNo, ARDivisionNo, CustomerNo}: {
-    Company: string;
+async function loadInvoiceDetail({InvoiceNo, HeaderSeqNo, ARDivisionNo, CustomerNo}: {
     InvoiceNo: string;
     HeaderSeqNo: string;
     ARDivisionNo: string;
@@ -159,16 +155,15 @@ async function loadInvoiceDetail({Company, InvoiceNo, HeaderSeqNo, ARDivisionNo,
                               LEFT JOIN (SELECT cd.ItemNumber AS ItemCode, cd.UPC AS CustomerUPC
                                          FROM barcodes.bc_customer c
                                                   INNER JOIN barcodes.bc_customerdetail cd
-                                                             ON cd.CustomerID = c.id AND c.Company = :Company AND
+                                                             ON cd.CustomerID = c.id AND c.Company = 'chums' AND
                                                                 c.ARDivisionNo = :ARDivisionNo AND
                                                                 c.CustomerNo = :CustomerNo) bc
                                         ON bc.ItemCode = i.ItemCode
-                     WHERE Company = :Company
+                     WHERE Company = 'chums'
                        AND InvoiceNo = :InvoiceNo
                        AND HeaderSeqNo = :HeaderSeqNo
                      ORDER BY DetailSeqNo`;
         const [rows] = await mysql2Pool.query<(InvoiceHistoryDetail & RowDataPacket)[]>(sql, {
-            Company,
             InvoiceNo,
             HeaderSeqNo,
             ARDivisionNo,
@@ -202,26 +197,17 @@ async function loadInvoiceDetail({Company, InvoiceNo, HeaderSeqNo, ARDivisionNo,
     }
 }
 
-/**
- *
- * @param {string} Company
- * @param {string} InvoiceNo
- * @param {string} HeaderSeqNo
- * @return {Promise<InvoiceTrackingRecord[]>}
- */
-async function loadTracking({Company, InvoiceNo, HeaderSeqNo}: {
-    Company: string;
+async function loadTracking({InvoiceNo, HeaderSeqNo}: {
     InvoiceNo: string;
     HeaderSeqNo: string;
 }): Promise<InvoiceTrackingRecord[]> {
     try {
         const sql = `SELECT PackageNo, TrackingID, StarshipShipVia, Weight
                      FROM c2.AR_InvoiceHistoryTracking
-                     WHERE Company = :Company
+                     WHERE Company = 'chums'
                        AND InvoiceNo = :InvoiceNo
                        AND HeaderSeqNo = :HeaderSeqNo`;
         const [rows] = await mysql2Pool.query<(InvoiceTrackingRecord & RowDataPacket)[]>(sql, {
-            Company,
             InvoiceNo,
             HeaderSeqNo
         });
@@ -236,8 +222,7 @@ async function loadTracking({Company, InvoiceNo, HeaderSeqNo}: {
     }
 }
 
-async function loadPDFStatus({Company, ARDivisionNo, CustomerNo, InvoiceNo}: {
-    Company: string;
+async function loadPDFStatus({ARDivisionNo, CustomerNo, InvoiceNo}: {
     ARDivisionNo: string;
     CustomerNo: string;
     InvoiceNo: string;
@@ -245,12 +230,11 @@ async function loadPDFStatus({Company, ARDivisionNo, CustomerNo, InvoiceNo}: {
     try {
         const sql = `SELECT Directory, Filename, DateCreated, TimeCreated, Sent
                      FROM c2.AR_CustomerPDFLog
-                     WHERE Company = :Company
+                     WHERE Company = 'chums'
                        AND ARDivisionNo = :ARDivisionNo
                        AND CustomerNo = :CustomerNo
                        AND DocumentKey = :InvoiceNo`;
         const [rows] = await mysql2Pool.query<(PaperlessLogRow & RowDataPacket)[]>(sql, {
-            Company,
             ARDivisionNo,
             CustomerNo,
             InvoiceNo
@@ -267,8 +251,7 @@ async function loadPDFStatus({Company, ARDivisionNo, CustomerNo, InvoiceNo}: {
 }
 
 
-async function loadInvoicePayments({Company, InvoiceNo, HeaderSeqNo, ARDivisionNo, CustomerNo}: {
-    Company: string;
+async function loadInvoicePayments({InvoiceNo, HeaderSeqNo, ARDivisionNo, CustomerNo}: {
     InvoiceNo: string;
     HeaderSeqNo: string;
     ARDivisionNo: string;
@@ -283,7 +266,7 @@ async function loadInvoicePayments({Company, InvoiceNo, HeaderSeqNo, ARDivisionN
                             TransactionAmt,
                             DateUpdated                   AS PaymentDate
                      FROM c2.AR_InvoiceHistoryPayment
-                     WHERE Company = :Company
+                     WHERE Company = 'chums'
                        AND InvoiceNo = :InvoiceNo
                        AND HeaderSeqNo = :HeaderSeqNo
 
@@ -301,7 +284,6 @@ async function loadInvoicePayments({Company, InvoiceNo, HeaderSeqNo, ARDivisionN
                        AND ARDivisionNo = :ARDivisionNo
                        AND CustomerNo = :CustomerNo`;
         const [rows] = await mysql2Pool.query<(InvoicePaymentRecord & RowDataPacket)[]>(sql, {
-            Company,
             InvoiceNo,
             HeaderSeqNo,
             ARDivisionNo,
@@ -319,32 +301,21 @@ async function loadInvoicePayments({Company, InvoiceNo, HeaderSeqNo, ARDivisionN
 
 }
 
-/**
- *
- * @param {string} Company
- * @param {string} InvoiceNo
- * @param {string} user
- * @param {boolean} [includeDetail]
- * @return {Promise<ExtendedInvoice>}
- */
-async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
-    Company: string;
+async function loadInvoice({InvoiceNo, userId, includeDetail,}: {
     InvoiceNo: string;
-    user: User,
     includeDetail?: boolean;
+    userId: number | string;
 }): Promise<ExtendedInvoice | null> {
     try {
-        const sageCompany = getSageCompany(Company);
-        Company = getDBCompany(Company);
-        const invoice = await loadInvoiceHistoryHeader({userId: user.id, Company, InvoiceNo});
+        const invoice = await loadInvoiceHistoryHeader({userId: userId, InvoiceNo});
         if (!invoice) {
             debug('loadInvoice() loading from sage', InvoiceNo);
-            const json = await apiFetchJSON<ExtendedInvoiceResponse>(`https://intranet.chums.com/node-sage/api/${sageCompany}/invoice/${InvoiceNo}`);
+            const json = await apiFetchJSON<ExtendedInvoiceResponse>(`https://intranet.chums.com/node-sage/api/CHI/invoice/${InvoiceNo}`);
             return json.result;
         }
         const validation = await validateUserAccount({
-            id: user.id,
-            Company,
+            id: userId,
+            Company: 'chums',
             ARDivisionNo: invoice?.ARDivisionNo,
             CustomerNo: invoice?.CustomerNo,
             ShipToCode: invoice?.ShipToCode ?? undefined,
@@ -354,7 +325,6 @@ async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
         }
 
         const dataParams = {
-            Company: Company,
             ARDivisionNo: invoice.ARDivisionNo,
             CustomerNo: invoice.CustomerNo,
             InvoiceNo: invoice.InvoiceNo,
@@ -385,13 +355,11 @@ async function loadInvoice({Company, InvoiceNo, user, includeDetail}: {
     }
 }
 
-export const getInvoice = async (req: Request, res: Response):Promise<void> => {
+export const getInvoice = async (req: Request, res: Response<unknown, ValidatedUser>): Promise<void> => {
     try {
-        const {Company, InvoiceNo, ARDivisionNo, CustomerNo} = req.params;
-
-        const user = res.locals!.profile!.user as User;
-        const images = req.query.images ?? '';
-        const invoice = await loadInvoice({Company, InvoiceNo, user})
+        const InvoiceNo = req.params.InvoiceNo;
+        const userId = res.locals.profile?.user?.id ?? 0;
+        const invoice = await loadInvoice({InvoiceNo, userId})
         res.json({invoice});
     } catch (err) {
         if (err instanceof Error) {
