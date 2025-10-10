@@ -1,10 +1,17 @@
-import Debug from 'debug';
-import { mysql2Pool } from "chums-local-modules";
-import { getDates } from "./utils.js";
+import Debug from 'debug'
+import {mysql2Pool} from "chums-local-modules";
+import {getDates} from "./utils.js"
+import {PaceDivisionRow, PaceParams, PaceSegmentRow} from "./pace-types.js";
+import {RowDataPacket} from "mysql2";
+
 const debug = Debug('chums:api:sales:pace:segment');
-export async function loadPaceBySegment({ year, month, ARDivisionNo }) {
+
+export interface LoadPaceBySegmentProps extends PaceParams {
+    ARDivisionNo: string;
+}
+export async function loadPaceBySegment({year, month, ARDivisionNo}: LoadPaceBySegmentProps): Promise<PaceSegmentRow[]> {
     try {
-        const { minDate, maxDate } = getDates({ year, month });
+        const {minDate, maxDate} = getDates({year, month});
         const sql = `
             SELECT d.ARDivisionNo,
                    d.Segment,
@@ -147,11 +154,10 @@ export async function loadPaceBySegment({ year, month, ARDivisionNo }) {
                      IFNULL(open.OpenOrderTotal, 0) DESC,
                      (IFNULL(invoiced.InvoiceTotal, 0) + IFNULL(current.InvoiceTotal, 0)) DESC
         `;
-        const args = { year, month, minDate, maxDate, ARDivisionNo };
-        const [rows] = await mysql2Pool.query(sql, args);
+        const args = {year, month, minDate, maxDate, ARDivisionNo}
+        const [rows] = await mysql2Pool.query<(PaceSegmentRow & RowDataPacket)[]>(sql, args);
         return rows;
-    }
-    catch (err) {
+    } catch (err) {
         if (err instanceof Error) {
             debug("loadDivisionPace()", err.message);
             return Promise.reject(err);
@@ -160,6 +166,9 @@ export async function loadPaceBySegment({ year, month, ARDivisionNo }) {
         return Promise.reject(new Error('Error in loadDivisionPace()'));
     }
 }
+
+
+
 const sqlCustomerTypes = `
     SELECT ct.CustomerType, ctt.ReportAsType, ctt.Description, COUNT(c.ARDivisionNo) AS customerCount
     FROM (
