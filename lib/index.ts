@@ -2,8 +2,6 @@ import Debug from 'debug';
 import {Router} from 'express';
 import {ValidatedUserProfile} from 'chums-types'
 import {deprecationNotice, logPath, validateRole, validateUser} from 'chums-local-modules';
-import {default as analysisRouter} from './analysis/index.js';
-
 import {getSalesByBillToState, getSalesByShipToState} from './sales-map/index.js';
 import {getHistoryGraphData} from './sales-history/index.js';
 import {getAccountList, renderAccountList, renderAccountListXLSX} from "./account-list/bill-to.js";
@@ -78,6 +76,7 @@ import {getCustomerRenameHistory, renderCustomerRenameHistory} from "./account/c
 import {postRenumberCustomer} from "./utils/renumber-customer/index.js";
 
 import {downloadVBGMonthlyInvoices, renderVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
+import {getSalesAnalysis} from "./analysis/index.js";
 
 const debug = Debug('chums:lib');
 const router = Router();
@@ -105,22 +104,13 @@ router.get('/account-list/ship-to.json', validateRole(['sales', 'rep']), getShip
 router.post('/account-list/ship-to.html', validateRole(['sales', 'rep']), renderShipToAccountList);
 router.post('/account-list/ship-to.xlsx', validateRole(['sales', 'rep']), renderShipToAccountListXLSX);
 
-
-// router.get('/account-list/bill-to', validateRole(['sales', 'rep']), deprecationNotice, getAccountList);
-// router.post('/account-list/bill-to/render', validateRole(['sales', 'rep']), deprecationNotice, renderAccountList);
-// router.post('/account-list/bill-to/xlsx', validateRole(['sales', 'rep']), deprecationNotice, renderAccountListXLSX);
-//
-// router.get('/account-list/ship-to', validateRole(['sales', 'rep']), deprecationNotice, getShipToAccountList);
-// router.post('/account-list/ship-to/render', validateRole(['sales', 'rep']), deprecationNotice, renderShipToAccountList);
-// router.post('/account-list/ship-to/xlsx', validateRole(['sales', 'rep']), deprecationNotice, renderShipToAccountListXLSX);
-
 router.get('/aging.json', getAging);
-// router.get('/aging', deprecationNotice, getAging);
 router.get('/aging/:salespersonSlug.json', getAging);
-// router.get('/aging/:SalespersonDivisionNo-:SalespersonNo', deprecationNotice, getAging);
 
-
-router.use('/analysis', validateRole('sales'), analysisRouter);
+router.get('/analysis.json', validateRole('sales'), getSalesAnalysis);
+router.post('/analysis.json', validateRole('sales'), getSalesAnalysis);
+router.get('/analysis', validateRole('sales'), deprecationNotice, getSalesAnalysis);
+router.post('/analysis', validateRole('sales'), deprecationNotice, getSalesAnalysis);
 
 router.get('/audit/customers/rename-history.html', renderCustomerRenameHistory);
 router.get('/audit/customers/rename-history.json', getCustomerRenameHistory);

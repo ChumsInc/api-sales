@@ -1,9 +1,17 @@
-import { combineQueries } from './combine-queries.js';
-import { joinedTables, customerFilters, invoiceDiscountFilters, invoiceFilters, itemFilters, openOrderFilters } from './query-snippets.js';
+import {combineQueries} from './combine-queries.js';
+import {
+    joinedTables,
+    customerFilters,
+    invoiceDiscountFilters,
+    invoiceFilters,
+    itemFilters,
+    openOrderFilters
+} from './query-snippets.js';
+import {SACombineOptions} from "./sa-types.js";
+
 const qryInvoicedP1 = `
-    SELECT c.Company,
-           ifnull(st.SalespersonDivisionNo, c.SalespersonDivisionNo) as SalespersonDivisionNo,
-           ifnull(st.SalespersonNo, c.SalespersonNo) as SalespersonNo,
+    SELECT h.Company,
+           ifnull(c.SortField, '') as SortField,
            SUM(d.QuantityShipped * d.UnitOfMeasureConvFactor) AS p1_shipped,
            SUM(d.ExtensionAmt)                                AS p1_sales,
            SUM(d.QuantityShipped * d.UnitCost)                AS p1_cogs,
@@ -30,44 +38,44 @@ const qryInvoicedP1 = `
         ${invoiceFilters}
         ${customerFilters}
         ${itemFilters}
-    GROUP BY Company, SalespersonDivisionNo, SalespersonNo
+    GROUP BY Company, SortField
 `;
-const qryInvoicedP2 = `
-    SELECT c.Company,
-           ifnull(st.SalespersonDivisionNo, c.SalespersonDivisionNo) as SalespersonDivisionNo,
-           ifnull(st.SalespersonNo, c.SalespersonNo) as SalespersonNo,
-           0                                                  AS p1_shipped,
-           0                                                  AS p1_sales,
-           0                                                  AS p1_cogs,
-           0                                                  AS p1_disc,
-           0                                                  AS p1_open,
-           0                                                  AS p1_open_sales,
-           0                                                  AS p1_open_cogs,
 
-           SUM(d.QuantityShipped * d.UnitOfMeasureConvFactor) AS p2_shipped,
-           SUM(d.ExtensionAmt)                                AS p2_sales,
-           SUM(d.QuantityShipped * d.UnitCost)                AS p2_cogs,
-           0                                                  AS p2_disc,
-           0                                                  AS p2_open,
-           0                                                  AS p2_open_sales,
-           0                                                  AS p2_open_cogs
-    FROM c2.ar_invoicehistoryheader h
-             INNER JOIN c2.ar_invoicehistorydetail d
-                        ON d.Company = h.Company
-                            AND d.InvoiceNo = h.InvoiceNo
-                            AND d.HeaderSeqNo = h.HeaderSeqNo
+const qryInvoicedP2 = `
+SELECT h.Company,
+       ifnull(c.SortField, '') as SortField,
+       0                                                  AS p1_shipped,
+       0                                                  AS p1_sales,
+       0                                                  AS p1_cogs,
+       0                                                  AS p1_disc,
+       0                                                  AS p1_open,
+       0                                                  AS p1_open_sales,
+       0                                                  AS p1_open_cogs,
+
+       SUM(d.QuantityShipped * d.UnitOfMeasureConvFactor) AS p2_shipped,
+       SUM(d.ExtensionAmt)                                AS p2_sales,
+       SUM(d.QuantityShipped * d.UnitCost)                AS p2_cogs,
+       0                                                  AS p2_disc,
+       0                                                  AS p2_open,
+       0                                                  AS p2_open_sales,
+       0                                                  AS p2_open_cogs
+FROM c2.ar_invoicehistoryheader h
+     INNER JOIN c2.ar_invoicehistorydetail d
+                ON d.Company = h.Company
+                    AND d.InvoiceNo = h.InvoiceNo
+                    AND d.HeaderSeqNo = h.HeaderSeqNo
      ${joinedTables}
-    WHERE h.Company = :company
-      AND h.InvoiceDate BETWEEN :p2min AND :p2max
-        ${invoiceFilters}
-        ${customerFilters}
-        ${itemFilters}
-    GROUP BY Company, SalespersonDivisionNo, SalespersonNo
+WHERE h.Company = :company
+  AND h.InvoiceDate BETWEEN :p2min AND :p2max
+  ${invoiceFilters}
+  ${customerFilters}
+  ${itemFilters}
+GROUP BY Company, SortField
 `;
-const qryInvoiceDiscountP1 = `
-    SELECT c.Company,
-           ifnull(st.SalespersonDivisionNo, c.SalespersonDivisionNo) as SalespersonDivisionNo,
-           ifnull(st.SalespersonNo, c.SalespersonNo) as SalespersonNo,
+
+const qryInvoiceDiscountP1 = `-- invoiced discounts for period 1` + `
+    SELECT h.Company,
+       ifnull(c.SortField, '') as SortField,
            0                  AS p1_shipped,
            0                  AS p1_sales,
            0                  AS p1_cogs,
@@ -87,21 +95,15 @@ const qryInvoiceDiscountP1 = `
          INNER JOIN c2.ar_customer c
                     ON c.company = h.Company AND c.ardivisionno = h.ARDivisionNo AND
                        c.customerno = h.CustomerNo
-         LEFT JOIN c2.SO_ShipToAddress st
-                   ON st.Company = h.Company AND
-                      st.ARDivisionNo = h.ARDivisionNo AND
-                      st.CustomerNo = h.CustomerNo AND
-                      st.ShipToCode = ifnull(h.ShipToCode, '')
     WHERE c.Company = :company
       AND h.InvoiceDate BETWEEN :p1min AND :p1max
       ${invoiceDiscountFilters}
       ${customerFilters}
-    GROUP BY Company, SalespersonDivisionNo, SalespersonNo
-    `;
-const qryInvoiceDiscountP2 = `
-    SELECT c.Company,
-           ifnull(st.SalespersonDivisionNo, c.SalespersonDivisionNo) as SalespersonDivisionNo,
-           ifnull(st.SalespersonNo, c.SalespersonNo) as SalespersonNo,
+    GROUP BY Company, SortField`;
+
+const qryInvoiceDiscountP2 = `-- invoiced discounts for period 2` + `
+    SELECT h.Company,
+           ifnull(c.SortField, '') as SortField,
            0                  AS p1_shipped,
            0                  AS p1_sales,
            0                  AS p1_cogs,
@@ -121,21 +123,16 @@ const qryInvoiceDiscountP2 = `
          INNER JOIN c2.ar_customer c
                     ON c.company = h.Company AND c.ardivisionno = h.ARDivisionNo AND
                        c.customerno = h.CustomerNo
-         LEFT JOIN c2.SO_ShipToAddress st
-                   ON st.Company = h.Company AND
-                      st.ARDivisionNo = h.ARDivisionNo AND
-                      st.CustomerNo = h.CustomerNo AND
-                      st.ShipToCode = ifnull(h.ShipToCode, '')
     WHERE c.Company = :company
       AND h.InvoiceDate BETWEEN :p2min AND :p2max
       ${invoiceDiscountFilters}
       ${customerFilters}
-    GROUP BY Company, SalespersonDivisionNo, SalespersonNo
+    GROUP BY Company, SortField
 `;
-const qryOpenP1 = `
+
+const qryOpenP1 = `-- open orders for period 1` + `
 SELECT h.Company,
-       h.SalespersonDivisionNo,
-       h.SalespersonNo,
+       ifnull(c.SortField, '') as SortField,
        0                                                                        AS p1_shipped,
        0                                                                        AS p1_sales,
        0                                                                        AS p1_cogs,
@@ -161,12 +158,12 @@ WHERE h.Company = :company
   ${openOrderFilters}
   ${customerFilters}
   ${itemFilters}
-GROUP BY Company, SalespersonDivisionNo, SalespersonNo
+GROUP BY Company, SortField
 `;
-const qryOpenP2 = `
+
+const qryOpenP2 = `-- open orders for period 2` + `
 SELECT h.Company,
-       h.SalespersonDivisionNo,
-       h.SalespersonNo,
+       ifnull(c.SortField, '') as SortField,
        0                                                                        AS p1_shipped,
        0                                                                        AS p1_sales,
        0                                                                        AS p1_cogs,
@@ -192,11 +189,12 @@ WHERE h.Company = :company
   ${openOrderFilters}
   ${customerFilters}
   ${itemFilters}
-GROUP BY Company, SalespersonDivisionNo, SalespersonNo
+GROUP BY Company, SortField
 `;
+
 const query = `
-    SELECT concat(d.SalespersonDivisionNo, '-', d.SalespersonNo)                 AS key_field,
-           d.SalespersonName,
+    SELECT ifnull(nullif(h.SortField, ''), 'N/A')                             AS key_field,
+           ifnull(nullif(h.SortField, ''), '--unassigned--') as description,
            SUM(IFNULL(h.p1_shipped, 0))                                          AS p1_shipped,
            SUM(IFNULL(h.p1_sales, 0))                                            AS p1_sales,
            IF(IFNULL(:discounts, '') = '1', SUM(IFNULL(h.p1_disc, 0)), 0)        AS p1_discount,
@@ -212,16 +210,13 @@ const query = `
            IF(IFNULL(:openOrders, '') = '1', SUM(IFNULL(h.p2_open, 0)), 0)       AS p2_open,
            IF(IFNULL(:openOrders, '') = '1', SUM(IFNULL(h.p2_open_sales, 0)), 0) AS p2_open_sales,
            IF(IFNULL(:openOrders, '') = '1', SUM(IFNULL(h.p2_open_cogs, 0)), 0)  AS p2_open_cogs
-    FROM c2.ar_salesperson d
-         INNER JOIN ( $SUB_QUERIES$ ) h
-                    ON h.Company = d.Company
-                    AND h.SalespersonDivisionNo = d.SalespersonDivisionNo 
-                    AND h.SalespersonNo = d.SalespersonNo
-    GROUP BY d.Company, d.SalespersonDivisionNo, d.SalespersonNo
+    FROM ( $SUB_QUERIES$ ) h
+    GROUP BY ifnull(nullif(h.SortField, ''), 'N/A')
     ORDER BY $ORDER_BY$
     LIMIT :limit
 `;
-export const buildQuery = (options) => {
+
+export const buildQuery = (options: SACombineOptions) => {
     return combineQueries({
         query,
         options,
@@ -231,5 +226,5 @@ export const buildQuery = (options) => {
         qryInvoiceDiscountP2,
         qryOpenP1,
         qryOpenP2
-    });
-};
+    })
+}
