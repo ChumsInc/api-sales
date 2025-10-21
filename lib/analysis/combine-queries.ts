@@ -1,4 +1,4 @@
-import {SACombineOptions} from "./sa-types.js";
+import type {SACombineOptions} from "./sa-types.d.ts";
 
 export interface CombineQueriesParams {
     query: string;
@@ -11,7 +11,7 @@ export interface CombineQueriesParams {
     qryOpenP2?: string;
 }
 
-export const combineQueries = ({
+export function combineQueries({
                                    query,
                                    options = {},
                                    qryInvoicedP1,
@@ -20,7 +20,7 @@ export const combineQueries = ({
                                    qryInvoiceDiscountP2 = '',
                                    qryOpenP1 = '',
                                    qryOpenP2 = '',
-                               }: CombineQueriesParams): string => {
+                               }: CombineQueriesParams): string {
     if (!options.SortField || options.SortField.length === 0) {
         options.SortField = ['key_field'];
     }

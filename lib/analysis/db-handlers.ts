@@ -69,7 +69,7 @@ export async function buildSQL(params: SACombineOptions): Promise<string> {
 async function loadResults<T = SASectionRow>(params: SAParams): Promise<SAQueryResult<T>> {
     try {
         const query = await buildSQL(params);
-        const [rows] = await mysql2Pool.query<SARow<T>[]>(query, params);
+        const [rows] = await mysql2Pool.query<SARow<T>[]>(query, {...params, company: 'chums'});
         return {
             query: parseSQL(query, params),
             rows: rows.map(row => {
