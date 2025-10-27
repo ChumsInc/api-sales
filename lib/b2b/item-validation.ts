@@ -37,6 +37,7 @@ export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
                                            vwa.WarehouseCode = '000'
                      WHERE p.products_sell_as = 1
                        AND p.products_status = 1
+                       AND JSON_EXTRACT(p.additional_data, '$.isRedirect') <> true
                        AND (i.ItemCode IS NULL OR
                             i.ProductType = 'D' OR
                             i.InactiveItem = 'Y' OR
