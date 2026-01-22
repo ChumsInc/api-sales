@@ -10,6 +10,7 @@ import {getInvoices} from './invoices.js';
 import {getItemValidation, renderItemValidation} from "./item-validation.js";
 import {getOrderHistory} from "./order-history.js";
 import {getOpenOrders, getOpenSalesOrder} from "./open-orders.js";
+import {getRepList} from "./sales-person.js";
 
 const router = Router();
 
@@ -52,6 +53,8 @@ router.post('/permissions/:Company/:ARDivisionNo/:CustomerNo/:ContactCode', post
 
 router.get('/promo/:id(\\d+)?', getPromoCodes);
 router.get('/promo/:promo_code?', getPromoCodes);
+
+router.get('/salesperson/list.json', getRepList)
 
 
 export default router;
