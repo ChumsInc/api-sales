@@ -118,7 +118,8 @@ const querySalesOrder = `
              LEFT JOIN c2.IM_ItemWarehouseAdditional ia
                        ON ia.Company = h.Company AND ia.ItemCode = d.ItemCode AND ia.WarehouseCode = d.WarehouseCode
              LEFT JOIN c2.IM_KitComponentCost ik
-                       ON ik.Company = d.Company AND ik.ItemCode = d.ItemCode AND ik.WarehouseCode = d.WarehouseCode
+                       ON ik.Company = d.Company AND ik.ItemCode = d.ItemCode AND ik.WarehouseCode = d.WarehouseCode AND
+                          ik.Revision = d.Revision
              LEFT JOIN c2.gl_account a_cost
                        ON a_cost.Company = d.Company AND a_cost.AccountKey = d.CostOfGoodsSoldAcctKey
              LEFT JOIN c2.gl_account a_sales
@@ -222,7 +223,8 @@ const queryOrdersList = `
                                   LEFT JOIN c2.IM_KitComponentCost ik
                                             ON ik.Company = d.Company AND
                                                ik.ItemCode = d.ItemCode AND
-                                               ik.WarehouseCode = d.WarehouseCode
+                                               ik.WarehouseCode = d.WarehouseCode and 
+                                               ik.Revision = d.Revision
                                   LEFT JOIN c2.SO_OrderMarginCustomers omc
                                             ON omc.Company = h.Company AND omc.ARDivisionNo = h.ARDivisionNo AND
                                                omc.CustomerNo = h.CustomerNo
@@ -283,21 +285,21 @@ const queryCreditMemos = `
              INNER JOIN (SELECT h.Company,
                                 h.InvoiceNo,
                                 h.InvoiceType,
-                                SUM(d.ExtensionAmt)                                   AS ItemTotal,
+                                SUM(d.ExtensionAmt)                               AS ItemTotal,
                                 SUM(IFNULL(IFNULL(ik.AverageCost, NULLIF(iw.AverageCost, 0)) *
                                            d.UnitOfMeasureConvFactor,
                                            d.UnitCost) *
-                                    d.QuantityOrdered)                                AS CostTotal,
+                                    d.QuantityOrdered)                            AS CostTotal,
                                 SUM(d.ExtensionAmt) - SUM(
-                                            IFNULL(IFNULL(ik.AverageCost, NULLIF(iw.AverageCost, 0)) *
-                                                   d.UnitOfMeasureConvFactor,
-                                                   d.UnitCost) * (d.QuantityShipped)) AS Revenue,
+                                        IFNULL(IFNULL(ik.AverageCost, NULLIF(iw.AverageCost, 0)) *
+                                               d.UnitOfMeasureConvFactor,
+                                               d.UnitCost) * (d.QuantityShipped)) AS Revenue,
                                 IFNULL(SUM((d.ExtensionAmt) -
                                            (IFNULL(IFNULL(ik.AverageCost, NULLIF(iw.AverageCost, 0)) *
                                                    d.UnitOfMeasureConvFactor,
                                                    d.UnitCost) *
                                             (d.QuantityShipped)))
-                                           / SUM(d.ExtensionAmt), 0)                  AS Margin
+                                           / SUM(d.ExtensionAmt), 0)              AS Margin
                          FROM c2.ar_invoicehistoryheader h
                                   INNER JOIN c2.ar_invoicehistorydetail d
                                              ON d.Company = h.Company AND d.InvoiceNo = h.InvoiceNo
@@ -309,7 +311,7 @@ const queryCreditMemos = `
                                                ia.WarehouseCode = d.WarehouseCode
                                   LEFT JOIN c2.IM_KitComponentCost ik
                                             ON ik.Company = d.Company AND ik.ItemCode = d.ItemCode AND
-                                               ik.WarehouseCode = d.WarehouseCode
+                                               ik.WarehouseCode = d.WarehouseCode AND ik.Revision = d.Revision
                          WHERE h.company = 'chums'
                            AND h.InvoiceType NOT IN ('IN', 'XD')
                            AND h.InvoiceDate >= :since
@@ -417,7 +419,7 @@ function parseOrderMarginProps(req:Request):LoadOrdersProps {
         filterEmployee: req.query.filterEmployee as string,
         filterEDI: req.query.filterEDI as string,
         filterPromo: req.query.filterPromo as string,
-        maxMargin: req.params.maxMargin ?? req.query.maxMargin as string,
+        maxMargin: (req.params.maxMargin ?? req.query.maxMargin) as string,
         since: req.query.since as string,
     }
 }
@@ -439,7 +441,7 @@ export async function getOrderMargins(req:Request, res:Response) {
 
 function parseInvoiceProps(req:Request):LoadInvoicesProps {
     return {
-        maxMargin: req.params.maxMargin ?? req.query.maxMargin as string,
+        maxMargin: (req.params.maxMargin ?? req.query.maxMargin) as string,
         since: req.query.since as string,
     }
 }
@@ -519,7 +521,8 @@ async function loadSOItemMargins({salesOrderNo}:{salesOrderNo:string}):Promise<S
 
 export async function getOrderItemMargins(req:Request, res:Response) {
     try {
-        const items = await loadSOItemMargins({salesOrderNo: req.params.salesOrderNo});
+        const salesOrderNo = req.params.salesOrderNo as string;
+        const items = await loadSOItemMargins({salesOrderNo});
         res.json({items});
     } catch(err:unknown) {
         if (err instanceof Error) {
