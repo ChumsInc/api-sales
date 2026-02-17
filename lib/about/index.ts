@@ -32,7 +32,7 @@ async function loadVersion(): Promise<string> {
     return version;
 }
 
-export const aboutAPI = async (req: Request, res: Response) => {
+export const aboutAPI = async (req: Request, res: Response):Promise<void> => {
     try {
         const version = await loadVersion();
         res.json({

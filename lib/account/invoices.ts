@@ -5,34 +5,23 @@ import {RowDataPacket} from "mysql2";
 
 const debug = Debug('chums:lib:account:invoices');
 
-/**
- *
- * @param {number} user_id
- * @param {string} Company
- * @param {string} ARDivisionNo
- * @param {string} CustomerNo
- * @param {string} year
- * @param {number|string} [offset]
- * @param {number|string} [limit]
- * @return {Promise<AccountInvoice[]>}
- */
+export interface LoadAccountInvoicesParams {
+    user_id: number | string;
+    ARDivisionNo: string;
+    CustomerNo: string;
+    year: string;
+    offset?: number | string;
+    limit?: number | string;
+}
+
 export async function loadAccountInvoices({
                                               user_id,
-                                              Company,
                                               ARDivisionNo,
                                               CustomerNo,
                                               year,
                                               offset = 0,
                                               limit = 1000
-                                          }:{
-    user_id: number|string;
-    Company: string;
-    ARDivisionNo:string;
-    CustomerNo: string;
-    year: string;
-    offset?: number|string;
-    limit?: number|string;
-}):Promise<AccountInvoice[]> {
+                                          }: LoadAccountInvoicesParams): Promise<AccountInvoice[]> {
     limit = Number(limit) || 1000;
     offset = Number(offset) || 0;
 
@@ -70,7 +59,7 @@ export async function loadAccountInvoices({
                                     AND accounts.CustomerNo = h.CustomerNo
                                     AND accounts.ShipToCode = IFNULL(h.ShipToCode, '')
 
-            WHERE h.Company = :Company
+            WHERE h.Company = 'chums'
               AND h.ARDivisionNo = :ARDivisionNo
               AND h.CustomerNo = :CustomerNo
               AND (IFNULL(:year, '') = '' OR YEAR(InvoiceDate) = :year)
@@ -80,19 +69,27 @@ export async function loadAccountInvoices({
             LIMIT :limit OFFSET :offset
         `;
 
-        const args = {Company, ARDivisionNo, CustomerNo, year, user_id: user_id, api_id: +user_id * -1, limit, offset};
+        const args = {
+            ARDivisionNo,
+            CustomerNo,
+            year,
+            user_id: user_id,
+            api_id: +user_id * -1,
+            limit,
+            offset
+        };
 
         const [rows] = await mysql2Pool.query<(AccountInvoice & RowDataPacket)[]>(sql, args);
 
-        rows.forEach(row => {
-            row.TaxableSalesAmt = Number(row.TaxableSalesAmt || 0);
-            row.NonTaxableSalesAmt = Number(row.NonTaxableSalesAmt || 0);
-            row.DiscountAmt = Number(row.DiscountAmt || 0);
-            row.FreightAmt = Number(row.FreightAmt || 0);
-        });
+        return rows.map(row => ({
+            ...row,
+            TaxableSalesAmt: Number(row.TaxableSalesAmt || 0),
+            NonTaxableSalesAmt: Number(row.NonTaxableSalesAmt || 0),
+            DiscountAmt: Number(row.DiscountAmt || 0),
+            FreightAmt: Number(row.FreightAmt || 0),
+        }))
 
-        return rows;
-    } catch(err:unknown) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             debug("loadAccountInvoices()", err.message);
             return Promise.reject(err);
@@ -107,12 +104,17 @@ export interface YearInvoiceCount {
     invoices: number,
 }
 
-export async function loadYearInvoiceCount({user_id, Company, ARDivisionNo, CustomerNo}:{
-    user_id: number|string;
-    Company: string;
+export interface LoadYearInvoiceCountParams {
+    user_id: number | string;
     ARDivisionNo: string;
     CustomerNo: string;
-}):Promise<YearInvoiceCount[]> {
+}
+
+export async function loadYearInvoiceCount({
+                                               user_id,
+                                               ARDivisionNo,
+                                               CustomerNo
+                                           }: LoadYearInvoiceCountParams): Promise<YearInvoiceCount[]> {
     try {
         const sql = `
             SELECT YEAR(h.InvoiceDate) AS year,
@@ -124,7 +126,7 @@ export async function loadYearInvoiceCount({user_id, Company, ARDivisionNo, Cust
                                     AND accounts.CustomerNo = h.CustomerNo
                                     AND accounts.ShipToCode = IFNULL(h.ShipToCode, '')
 
-            WHERE h.Company = :Company
+            WHERE h.Company = 'chums'
               AND h.ARDivisionNo = :ARDivisionNo
               AND h.CustomerNo = :CustomerNo
               AND (accounts.userid = :user_id OR accounts.api_id = :api_id)
@@ -133,7 +135,7 @@ export async function loadYearInvoiceCount({user_id, Company, ARDivisionNo, Cust
             ORDER BY year DESC
         `;
 
-        const args = {Company, ARDivisionNo, CustomerNo, user_id: user_id, api_id: +user_id * -1};
+        const args = {ARDivisionNo, CustomerNo, user_id: user_id, api_id: +user_id * -1};
 
         const [rows] = await mysql2Pool.query<(YearInvoiceCount & RowDataPacket)[]>(sql, args);
         return rows;

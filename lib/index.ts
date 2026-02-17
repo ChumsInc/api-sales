@@ -77,6 +77,7 @@ import {postRenumberCustomer} from "./utils/renumber-customer/index.js";
 
 import {downloadVBGMonthlyInvoices, renderVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
 import {getSalesAnalysis} from "./analysis/index.js";
+import {getHistoryGraphTotals} from "./sales-history/method-handlers.js";
 
 const debug = Debug('chums:lib');
 const router = Router();
@@ -143,7 +144,9 @@ router.get('/gdpr/:SalesOrderNo.json', getGDPRSORequest);
 router.post('/gdpr/:SalesOrderNo.json', execGDPRSORequest);
 router.post('/gdpr.json', execGDPRRequest);
 
+router.get('/history-graph.json', getHistoryGraphTotals);
 router.get('/history-graph/:Company', getHistoryGraphData);
+
 
 router.get('/invoice/:InvoiceNo.json', getInvoice);
 router.get('/invoice/:Company/:ARDivisionNo-:CustomerNo/:InvoiceNo.json', getInvoice);
@@ -200,14 +203,16 @@ router.post('/pricing/:Company/:PriceCode/:CustomerPriceLevel', validateRole(['c
 router.delete('/pricing/:Company/:PriceCode/:CustomerPriceLevel', validateRole(['cost']), delNewPricingEntry);
 
 
-router.get('/rep/account-list/:Company/totals/:asOfDate(\\d{4}-\\d{2}-\\d{2})?', getRepTotals);
-router.get('/rep/account-list/:Company/:SalespersonNo([0-9A-Z]+)/:asOfDate(\\d{4}-\\d{2}-\\d{2})?', getRepAccounts);
-router.get('/rep/account-list/:Company/:SalespersonNo([0-9A-Z]+)/:asOfDate(\\d{4}-\\d{2}-\\d{2})/xlsx', getRepAccountsXLSX);
-router.get('/rep/account-orders/:Company/:SalespersonNo([0-9A-Z]+)', getRepOrders);
+router.get('/rep/account-list/totals/:asOfDate.json', getRepTotals);
+router.get('/rep/account-list/:SalespersonNo/:asOfDate.json', getRepAccounts);
+router.get('/rep/account-list/:SalespersonNo/:asOfDate.xlsx', getRepAccountsXLSX);
 
-router.get('/rep/list/:company(chums|bc|CHI|BCS)', getRepList);
-router.get('/rep/list/:company(chums|bc|CHI|BCS)/condensed', getCondensedRepList);
-router.get('/rep/list/:company/:userid(\\d+)', getUserRepList);
+router.get('/rep/account-orders/:Company/:SalespersonNo.json', getRepOrders);
+router.get('/rep/account-orders/:Company/:SalespersonNo', getRepOrders);
+
+router.get('/rep/list/:company', getRepList);
+router.get('/rep/list/:company/condensed', getCondensedRepList);
+router.get('/rep/list/:company/:userid', getUserRepList);
 
 router.get('/rep/safety/invoices/:company/:SalespersonDivisionNo-:SalespersonNo/:minDate/:maxDate', validateRep, getSafetyRepInvoices);
 

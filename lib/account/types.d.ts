@@ -27,3 +27,17 @@ export interface ImageListResponse {
 export interface ExtendedInvoiceResponse {
     result: ExtendedInvoice|null;
 }
+
+export interface MissingTaxSchedule {
+    ARDivisionNo: string;
+    CustomerNo: string;
+    ShipToCode: string|null;
+    CustomerName: string|null;
+    City: string|null;
+    State: string|null;
+    SalespersonDivisionNo: string|null;
+    SalespersonNo: string|null;
+    UserName: string|null;
+    error: string;
+    sortPriority: number;
+}
