@@ -63,8 +63,6 @@ export async function loadMonthHistory(userId: number) {
 
 export async function loadMonthOpen(userId: number) {
     try {
-        const year = new Date().getFullYear();
-
         const query = `SELECT MONTH(IF(h.ShipExpireDate < NOW(),
                                        NOW(),
                                        h.ShipExpireDate)

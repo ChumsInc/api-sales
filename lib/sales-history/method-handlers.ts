@@ -3,8 +3,6 @@ import {Request, Response} from "express";
 import {ValidatedUserProfile} from "chums-types";
 import {loadMonthHistory, loadMonthOpen} from "./db-handlers.js";
 import {loadCompanyGoal} from "../goal/index.js";
-import dayjs from "dayjs";
-import Decimal from "decimal.js";
 
 const debug = Debug('chums:lib:sales-history:method-handlers');
 
@@ -45,7 +43,7 @@ export async function getHistoryGraphTotals(req: Request<unknown, ValidatedUserP
     )
 
     const response = months.map(month => {
-        const goal = goalBudget.find(row =>  row.FiscalPeriod === month);
+        const goal = goalBudget.find(row => row.FiscalPeriod === month);
         const monthHistory = history.find(row => row.month === month);
         const open = openOrders.find(row => row.month === month);
         return {

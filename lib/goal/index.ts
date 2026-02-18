@@ -47,11 +47,6 @@ export async function loadCompanyGoal(fiscalYear?:string|undefined):Promise<Peri
 
 export async function getCompanyGoal(req:Request, res:Response):Promise<void> {
     try {
-        const today = new Date();
-        const params = {
-            Company: req.params.Company || 'chums',
-            FiscalYear: req.params.FiscalYear || today.getFullYear()
-        };
         const goal = await loadCompanyGoal(req.params.fiscalYear as string);
         res.json({goal});
     } catch(err:unknown) {
