@@ -6,8 +6,7 @@ import {
     InvoiceHistoryHeader,
     InvoicePaymentRecord,
     InvoiceTrackingRecord,
-    PaperlessLogRow,
-    User
+    PaperlessLogRow
 } from 'chums-types';
 import {RowDataPacket} from "mysql2";
 import {Request, Response} from "express";
@@ -150,7 +149,7 @@ async function loadInvoiceDetail({InvoiceNo, HeaderSeqNo, ARDivisionNo, Customer
                             i.ProductType,
                             bc.CustomerUPC
                      FROM c2.ar_invoicehistorydetail d
-                              LEFT JOIN c2.ci_item i
+                              LEFT JOIN c2.CI_Item i
                                         USING (Company, ItemCode)
                               LEFT JOIN (SELECT cd.ItemNumber AS ItemCode, cd.UPC AS CustomerUPC
                                          FROM barcodes.bc_customer c
@@ -301,7 +300,7 @@ async function loadInvoicePayments({InvoiceNo, HeaderSeqNo, ARDivisionNo, Custom
 
 }
 
-async function loadInvoice({InvoiceNo, userId, includeDetail,}: {
+async function loadInvoice({InvoiceNo, userId}: {
     InvoiceNo: string;
     includeDetail?: boolean;
     userId: number | string;
@@ -357,7 +356,7 @@ async function loadInvoice({InvoiceNo, userId, includeDetail,}: {
 
 export const getInvoice = async (req: Request, res: Response<unknown, ValidatedUser>): Promise<void> => {
     try {
-        const InvoiceNo = req.params.InvoiceNo;
+        const InvoiceNo = req.params.InvoiceNo as string;
         const userId = res.locals.profile?.user?.id ?? 0;
         const invoice = await loadInvoice({InvoiceNo, userId})
         res.json({invoice});

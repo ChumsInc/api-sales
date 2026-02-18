@@ -1,6 +1,5 @@
 export interface LoadOrdersParams {
     user_id: number;
-    company: string;
     ARDivisionNo:string;
     CustomerNo: string;
     limit?: number|string;
@@ -38,4 +37,34 @@ export interface OrdersByPeriodRecord {
     ShipWeek: string|number;
     week: number;
     day: number;
+}
+
+export interface AccountOpenOrder {
+    Company: string;
+    SalesOrderNo: string;
+    ARDivisionNo: string;
+    ShipExpireDate: string|null;
+    CustomerPONo: string|null;
+    CustomerNo: string;
+    BillToName: string|null;
+    OrderDate: string;
+    OrderType: string;
+    OrderStatus: string;
+    ShipToCode: string|null;
+    ShipToName: string|null;
+    ShipToCity: string|null;
+    ShipToState: string|null;
+    TaxableAmt: number|string;
+    NonTaxableAmt: number|string;
+    DiscountAmt: number|string;
+    SalesTaxAmt: number|string;
+    FreightAmt: number|string;
+    LastInvoiceNo: string|null;
+    Imprinted: string|null;
+    UDF_CANCEL_DATE: string|null;
+    CancelReasonCode: string|null;
+}
+
+export interface AccountClosedOrder extends Omit<AccountOpenOrder, 'ShipExpireDate'|'OrderType'|'Imprinted'|'UDF_CANCEL_DATE'> {
+    LastInvoiceDate: string|null;
 }

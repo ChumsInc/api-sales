@@ -12,8 +12,8 @@ const router = Router();
 export const getPaceByDivision = async (req: Request, res: Response) => {
     try {
         const parms: PaceParams = {
-            year: req.params.year ?? req.query.year ?? dayjs().format('YYYY'),
-            month: req.params.month ?? req.query.month ?? dayjs().format('MM'),
+            year: req.params.year as string ?? req.query.year as string ?? dayjs().format('YYYY'),
+            month: req.params.month as string ?? req.query.month as string ?? dayjs().format('MM'),
         }
         const pace = await loadPaceByDivision(parms)
         res.json({pace});
@@ -29,9 +29,9 @@ export const getPaceByDivision = async (req: Request, res: Response) => {
 export const getPaceBySegment = async (req: Request, res: Response) => {
     try {
         const parms: PaceDivisionParams = {
-            year: req.params.year ?? req.query.year ?? dayjs().format('YYYY'),
-            month: req.params.month ?? req.query.month ?? dayjs().format('MM'),
-            ARDivisionNo: req.params.ARDivisionNo,
+            year: req.params.year as string ?? req.query.year as string ?? dayjs().format('YYYY'),
+            month: req.params.month as string ?? req.query.month as string ?? dayjs().format('MM'),
+            ARDivisionNo: req.params.ARDivisionNo as string,
         }
         const pace = await loadPaceBySegment(parms);
         res.json({pace});
@@ -47,9 +47,9 @@ export const getPaceBySegment = async (req: Request, res: Response) => {
 export const getPaceByCustomer = async (req: Request, res: Response) => {
     try {
         const parms: PaceDivisionParams = {
-            year: req.params.year ?? req.query.year ?? dayjs().format('YYYY'),
-            month: req.params.month ?? req.query.month ?? dayjs().format('MM'),
-            ARDivisionNo: req.params.ARDivisionNo,
+            year: req.params.year as string ?? req.query.year as string ?? dayjs().format('YYYY'),
+            month: req.params.month as string ?? req.query.month as string ?? dayjs().format('MM'),
+            ARDivisionNo: req.params.ARDivisionNo as string,
         }
         const pace = await loadPaceByCustomer(parms);
         res.json({pace});
@@ -65,11 +65,6 @@ export const getPaceByCustomer = async (req: Request, res: Response) => {
 router.get('/:ARDivisionNo/customer.json', getPaceByCustomer);
 router.get('/:ARDivisionNo/segment.json', getPaceBySegment);
 router.get('/chums.json', getPaceByDivision);
-
-router.get('/:company/:year(\\d{4})-:month(\\d{2})/:ARDivisionNo/customer', getPaceByCustomer);
-router.get('/:company/:year(\\d{4})-:month(\\d{2})/:ARDivisionNo/segment', getPaceBySegment);
-router.get('/:company/:year(\\d{4})-:month(\\d{2})', getPaceByDivision);
-router.get('/:company/:year(\\d{4})/:month(\\d{2})', getPaceByDivision);
 
 export default router;
 

@@ -27,7 +27,7 @@ export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
                             IFNULL(vwa.QuantityAvailable, 0) AS QuantityAvailable,
                             i.TotalQuantityOnHand
                      FROM b2b_oscommerce.products p
-                              LEFT JOIN c2.ci_item i ON i.ItemCode = p.products_model AND i.company = 'chums'
+                              LEFT JOIN c2.CI_Item i ON i.ItemCode = p.products_model AND i.company = 'chums'
                               LEFT JOIN c2.IM_ItemWarehouseAdditional ia
                                         ON ia.company = i.company AND
                                            ia.ItemCode = i.ItemCode AND
@@ -58,7 +58,7 @@ export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
                             IFNULL(vwa.QuantityAvailable, 0) AS QuantityAvailable,
                             i.TotalQuantityOnHand
                      FROM b2b_oscommerce.products p
-                              LEFT JOIN c2.ci_item i ON i.ItemCode = p.products_model AND i.company = 'chums'
+                              LEFT JOIN c2.CI_Item i ON i.ItemCode = p.products_model AND i.company = 'chums'
                               LEFT JOIN c2.IM_ItemWarehouseAdditional ia
                                         ON ia.company = i.company AND
                                            ia.ItemCode = i.ItemCode AND
@@ -89,7 +89,7 @@ export async function loadInactiveProducts(): Promise<ItemValidationRow[]> {
                             i.TotalQuantityOnHand
                      FROM b2b_oscommerce.products p
                               INNER JOIN b2b_oscommerce.products_items pi ON pi.productsID = p.products_id
-                              LEFT JOIN c2.ci_item i ON i.ItemCode = pi.itemCode
+                              LEFT JOIN c2.CI_Item i ON i.ItemCode = pi.itemCode
                               LEFT JOIN c2.IM_ItemWarehouseAdditional ia
                                         ON ia.company = i.company AND
                                            ia.ItemCode = i.ItemCode AND
@@ -354,7 +354,7 @@ export async function loadBillDetailValidation(): Promise<ProductMixValidationRo
                               INNER JOIN b2b_oscommerce.products_mixes m ON m.productsID = p.products_id
                               INNER JOIN b2b_oscommerce.products_mixes_detail md ON m.mixID = md.mixID
                               LEFT JOIN b2b_oscommerce.colors c ON c.colors_id = md.colorsID
-                              LEFT JOIN c2.ci_item i ON i.company = 'chums' AND i.ItemCode = m.itemCode
+                              LEFT JOIN c2.CI_Item i ON i.company = 'chums' AND i.ItemCode = m.itemCode
                               LEFT JOIN c2.BM_BillHeader bh ON bh.Company = i.company AND bh.BillNo = i.itemCode
                               LEFT JOIN c2.BM_BillDetail bd
                                         ON bd.Company = bh.Company AND
@@ -383,7 +383,7 @@ export async function loadBillDetailValidation(): Promise<ProductMixValidationRo
                               INNER JOIN b2b_oscommerce.products_mixes m ON m.productsID = p.products_id
                               INNER JOIN b2b_oscommerce.products_mixes_detail md ON m.mixID = md.mixID
                               LEFT JOIN b2b_oscommerce.colors c ON c.colors_id = md.colorsID
-                              LEFT JOIN c2.ci_item i ON i.company = 'chums' AND i.ItemCode = m.itemCode
+                              LEFT JOIN c2.CI_Item i ON i.company = 'chums' AND i.ItemCode = m.itemCode
                               LEFT JOIN c2.BM_BillHeader bh ON bh.Company = i.company AND bh.BillNo = i.itemCode
                               LEFT JOIN c2.BM_BillDetail bd
                                         ON bd.Company = bh.Company AND bd.BillNo = bh.BillNo AND

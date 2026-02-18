@@ -7,29 +7,26 @@ import {
     ValidatedUser,
 } from 'chums-local-modules';
 import Debug from "debug";
-
 import numeral from 'numeral';
 import {parse, titles} from './params.js';
 import {billToQuery} from './queries.js';
 import dayjs from 'dayjs';
 import {
     AccountListDataField,
-    AccountListField,
-    AccountListFilters, AccountListSalesField,
-    AccountListSalesPeriods,
-    AccountListTotals, AccountRow,
-    ALCustomer, LoadAccountProps,
+    AccountListSalesField,
+    AccountListTotals,
+    AccountRow,
+    ALCustomer,
+    LoadAccountProps,
     LoadAccountResult
 } from "./account-list-types.js";
-import {RowDataPacket} from "mysql2";
-import Decimal from "decimal.js";
+import {Decimal} from "decimal.js";
 import {Request, Response} from "express";
-import {ValidatedUserProfile} from "chums-types";
 
 const debug = Debug('chums:lib:sales:account-list:bill-to');
 
 
-export async function loadAccounts({filters, periods, sqlSort}:LoadAccountProps):Promise<LoadAccountResult> {
+export async function loadAccounts({filters, periods, sqlSort}: LoadAccountProps): Promise<LoadAccountResult> {
     try {
         const top = +(filters.top ?? 10000);
         const [
@@ -65,7 +62,7 @@ export async function loadAccounts({filters, periods, sqlSort}:LoadAccountProps)
             query: mysql2Pool.format(sql, {...filters, ...periods, SalespersonDivisionNo, SalespersonNo}),
             params: {...filters, ...periods, SalespersonDivisionNo, SalespersonNo},
         }
-    } catch(err:unknown) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             debug("loadAccounts()", err.message);
             return Promise.reject(err);
@@ -75,11 +72,11 @@ export async function loadAccounts({filters, periods, sqlSort}:LoadAccountProps)
     }
 }
 
-function prepForRender(rows:ALCustomer[]):ALCustomer[] {
+function prepForRender(rows: ALCustomer[]): ALCustomer[] {
     return rows.map(row => {
         return {
             ...row,
-            DateCreated: row.DateCreated ? dayjs(row.DateCreated).format( 'MM-DD-YYYY') : null,
+            DateCreated: row.DateCreated ? dayjs(row.DateCreated).format('MM-DD-YYYY') : null,
             DateLastActivity: row.DateLastActivity ? dayjs(row.DateLastActivity).format('MM-DD-YYYY') : null,
             SalesP1: numeral(row.SalesP1).format('0,0.00'),
             SalesP2: numeral(row.SalesP2).format('0,0.00'),
@@ -90,12 +87,12 @@ function prepForRender(rows:ALCustomer[]):ALCustomer[] {
     })
 }
 
-export const getAccountList = async (req:Request, res:Response<unknown, ValidatedUser>):Promise<void> => {
+export const getAccountList = async (req: Request, res: Response<unknown, ValidatedUser>): Promise<void> => {
     try {
         const _params = await parse({...req.body, ...req.query}, res.locals.profile!.user.id);
         const {rows, query, params} = await loadAccounts(_params);
         res.json({params, query, rows});
-    } catch(err:unknown) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             debug("getAccountList()", err.message);
             res.status(500).json({error: err.message, name: err.name});
@@ -105,13 +102,13 @@ export const getAccountList = async (req:Request, res:Response<unknown, Validate
     }
 };
 
-export const renderAccountList = async (req:Request, res:Response<unknown, ValidatedUser>):Promise<void> => {
+export const renderAccountList = async (req: Request, res: Response<unknown, ValidatedUser>): Promise<void> => {
     try {
         const {sqlSort, fields, filters, periods} = await parse(req.body, res.locals.profile!.user.id);
         const {rows, query, totals} = await loadAccounts({filters, periods, sqlSort});
         debug('render()', rows.length);
         res.render('sales/account-list', {rows: prepForRender(rows), fields, titles, periods, query, totals});
-    } catch(err:unknown) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             debug("renderAccountList()", err.message);
             res.status(500).send(`<div class="alert alert-danger"><strong>Error:</strong> ${err.message}</div>`);
@@ -121,11 +118,11 @@ export const renderAccountList = async (req:Request, res:Response<unknown, Valid
     }
 }
 
-export const renderAccountListXLSX = async (req:Request, res:Response<unknown, ValidatedUser>):Promise<void> => {
+export const renderAccountListXLSX = async (req: Request, res: Response<unknown, ValidatedUser>): Promise<void> => {
     try {
         const {sqlSort, fields, filters, periods} = await parse(req.body, res.locals.profile!.user.id);
         const {rows} = await loadAccounts({filters, periods, sqlSort});
-        const columnNames:Partial<ColumnNames<ALCustomer>> = {};
+        const columnNames: Partial<ColumnNames<ALCustomer>> = {};
         ['account', ...fields].forEach(field => {
             if (['SalesP1', 'SalesP2', 'SalesP3', 'SalesP4', 'SalesP5'].includes(field)) {
                 columnNames[field as keyof ALCustomer] = titles.periodTitles[field as AccountListSalesField](periods);
@@ -145,7 +142,7 @@ export const renderAccountListXLSX = async (req:Request, res:Response<unknown, V
         const filename = new Date().toISOString();
         res.setHeaders(buildXLSXHeaders(filename));
         res.send(workbook);
-    } catch(err:unknown) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             debug("renderAccountListXLSX()", err.message);
             res.status(500).json({error: err.message, name: err.name});

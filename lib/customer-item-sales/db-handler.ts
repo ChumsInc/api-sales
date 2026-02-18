@@ -1,5 +1,5 @@
 import {mysql2Pool} from "chums-local-modules";
-import Decimal from "decimal.js";
+import {Decimal} from "decimal.js";
 import Debug from "debug";
 import type {CustomerItemSalesRecord, CustomerItemSalesRow} from "./customer-item-types.js";
 import {RowDataPacket} from "mysql2";
@@ -49,7 +49,7 @@ export async function loadCustomerItemSalesV2({ARDivisionNo, CustomerNo, ItemCod
                                  WHERE userid = :userId) ua
                                 ON ua.Company = c.Company AND ua.ARDivisionNo = c.ARDivisionNo AND
                                    ua.CustomerNo = c.CustomerNo
-                     INNER JOIN c2.ci_item i
+                     INNER JOIN c2.CI_Item i
                                 ON i.Company = h.Company AND i.ItemCode = h.ItemCode
                      LEFT JOIN c2.SO_ShipToAddress s
                                ON s.Company = h.Company

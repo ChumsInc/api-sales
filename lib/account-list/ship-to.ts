@@ -21,7 +21,7 @@ import {
     LoadAccountProps,
     LoadAccountResult
 } from "./account-list-types.js";
-import Decimal from "decimal.js";
+import {Decimal} from "decimal.js";
 
 const debug = Debug('chums:lib:sales:account-list:ship-to');
 

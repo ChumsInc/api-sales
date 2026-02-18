@@ -44,7 +44,7 @@ FROM c2.ar_division d
                                 ON c.Company = h.Company
                                     AND c.ardivisionno = h.ardivisionno
                                     AND c.customerno = h.customerno
-                     LEFT JOIN  c2.ci_item im
+                     LEFT JOIN  c2.CI_Item im
                                 ON im.Company = d.Company
                                     AND im.ItemCode = d.ItemCode
                      LEFT JOIN  c2.gl_account gl
@@ -131,7 +131,7 @@ FROM c2.ar_division d
                                 ON c.Company = h.Company
                                     AND c.ardivisionno = h.ardivisionno
                                     AND c.customerno = h.customerno
-                     LEFT JOIN  c2.ci_item im
+                     LEFT JOIN  c2.CI_Item im
                                 ON im.Company = d.Company
                                     AND im.ItemCode = d.ItemCode
                      LEFT JOIN  c2.gl_account gl
@@ -267,7 +267,7 @@ FROM c2.ar_division d
                                 ON c.Company = h.Company
                                     AND c.ardivisionno = h.ardivisionno
                                     AND c.customerno = h.customerno
-                     LEFT JOIN  c2.ci_item im
+                     LEFT JOIN  c2.CI_Item im
                                 ON im.Company = d.Company
                                     AND im.ItemCode = d.ItemCode
                      LEFT JOIN  c2.gl_account gl
@@ -331,7 +331,7 @@ FROM c2.ar_division d
                                 ON c.Company = h.Company
                                     AND c.ardivisionno = h.ardivisionno
                                     AND c.customerno = h.customerno
-                     LEFT JOIN  c2.ci_item im
+                     LEFT JOIN  c2.CI_Item im
                                 ON im.Company = d.Company
                                     AND im.ItemCode = d.ItemCode
                      LEFT JOIN  c2.gl_account gl
