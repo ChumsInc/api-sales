@@ -115,7 +115,14 @@ export const renderShipToAccountList = async (req: Request, res: Response<unknow
         const {sqlSort, fields, filters, periods} = await parse(req.body, res.locals.profile!.user.id);
         const {rows, query, totals} = await loadAccounts({filters, periods, sqlSort});
         // debug('render()', rows.length, fields, titles);
-        res.render('sales/account-list', {rows: prepForRender(rows), fields, titles, periods, query, totals});
+        res.render('sales/account-list', {
+            rows: prepForRender(rows),
+            fields,
+            titles: {...titles.periodTitles, ...titles.dataTitles},
+            periods,
+            query,
+            totals
+        });
     } catch (err: unknown) {
         if (err instanceof Error) {
             debug("renderShipToAccountList()", err.message);
