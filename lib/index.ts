@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import {Router} from 'express';
-import {ValidatedUserProfile} from 'chums-types'
+import type {ValidatedUserProfile} from 'chums-types'
 import {deprecationNotice, logPath, validateRole, validateUser} from 'chums-local-modules';
 import {getSalesByBillToState, getSalesByShipToState} from './sales-map/index.js';
 import {getHistoryGraphData} from './sales-history/index.js';
@@ -21,8 +21,8 @@ import {getRepItemHistory} from './rep/rep-item-history.js';
 import {getCondensedRepList, getRepList, getUserRepList} from './rep/rep-list.js';
 import {getRepManagers, getRepPace, getRepPace_v2} from './rep/rep-pace.js'
 import {getRepPaceXLSX, getRepPaceXLSX_v2} from './rep/rep-pace-xlsx.js';
-import {getRepAccounts, getRepAccountsXLSX, getRepTotals} from './rep/account-list.js';
-import {getRepOrders} from './rep/rep-orders.js';
+import {getOpenRepOrders, getRepAccounts, getRepTotals, getRepOrders} from './rep/account-list/request-handlers.js';
+import {getRepAccountsXLSX} from './rep/account-list/excel-handlers.js';
 import {execGDPRRequest, execGDPRSORequest, getGDPRSORequest} from './gdpr/index.js'
 
 import {
@@ -66,7 +66,6 @@ import {
     renderTerminatedRepOrdersEmail,
     renderTerminatedRepOrdersReport
 } from "./rep/terminated-rep-reports.js";
-import {getOpenRepOrders} from "./rep/open-orders.js";
 import {aboutAPI} from "./about/index.js";
 import {getRepMismatch, renderRepMismatch, renderRepMismatchEmail} from "./audits/sales-order/rep-mismatch/index.js";
 import {getAging} from "./aging/index.js";
@@ -223,6 +222,7 @@ router.get('/rep/pace/:Company/:minDate/:maxDate', getRepPace);
 router.get('/rep/pace/:Company/reps', getRepList);
 router.get('/rep/pace.json', getRepPace_v2);
 router.get('/rep/pace.xlsx', getRepPaceXLSX_v2)
+router.get('/rep/orders.json', getOpenRepOrders);
 router.get('/rep/orders/:Company', getOpenRepOrders);
 
 router.get('/rep/:company/:salespersonDivisionNo-:salespersonNo/:minDate/:maxDate/items', validateRep, getRepItemHistory);
