@@ -33,7 +33,7 @@ export async function loadRepMismatch(): Promise<RepMismatchRecord[]> {
                          CONCAT_WS('-', c.SalespersonDivisionNo, c.SalespersonNo))
                      OR IFNULL(sorep.UDF_TERMINATED, 'N') = 'Y')
                    AND sorep.SalesManagerNo <> rep.SalespersonNo
-                   AND c.SalespersonNo NOT IN ('H00E', 'H00W', 'TEST', '0000', 'H04', 'H01', 'H00')
+                   AND c.SalespersonNo NOT IN ('TEST', '0000', 'H04', 'H01')
                    AND soh.OrderType <> 'Q'
 
                  UNION
