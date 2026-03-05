@@ -22,6 +22,8 @@ export async function getRepTotals(req:Request, res:Response<unknown, ValidatedU
             loadRepBillToTotal(params),
             loadRepShipToTotal(params),
         ])
+        const maxAge = 10 * 60; // 10 minutes
+        res.set('Cache-Control', `no-cache, no-store, must-revalidate, private, max-age=${maxAge}`);
         res.json({reps, shipToReps});
     } catch(err:unknown) {
         if (err instanceof Error) {
@@ -47,6 +49,8 @@ export async function getRepAccounts(req:Request, res:Response<unknown, Validate
             loadOpenOrders(params),
             loadRepCarts(params)
         ])
+        const maxAge = 10 * 60; // 10 minutes
+        res.set('Cache-Control', `no-cache, no-store, must-revalidate, private, max-age=${maxAge}`);
         res.json({accounts, shipTo, recentOrders, openOrders, carts});
     } catch(err:unknown) {
         if (err instanceof Error) {
@@ -64,6 +68,8 @@ export async function getOpenRepOrders(req:Request, res:Response<unknown, Valida
             userId: res.locals.profile!.user.id,
             salespersonNo: req.params.SalespersonNo as string ?? req.query.SalespersonNo as string,
         })
+        const maxAge = 10 * 60; // 10 minutes
+        res.set('Cache-Control', `no-cache, no-store, must-revalidate, private, max-age=${maxAge}`);
         res.json({orders});
     } catch(err:unknown) {
         if (err instanceof Error) {
@@ -85,6 +91,8 @@ export async function getRepOrders(req:Request, res:Response<unknown, ValidatedU
             loadRecentOrders(params),
             loadOpenOrders(params),
         ])
+        const maxAge = 10 * 60; // 10 minutes
+        res.set('Cache-Control', `no-cache, no-store, must-revalidate, private, max-age=${maxAge}`);
         res.json({recentOrders, openOrders});
     } catch(err:unknown) {
         if (err instanceof Error) {

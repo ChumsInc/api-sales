@@ -81,7 +81,9 @@ export function prepB2BCart(row:RepOpenCart):RepOpenCart {
         customerNo: row.shipToCode
             ? `${[row.arDivisionNo, row.customerNo].join('-')}/${row.shipToCode}`
             : `${[row.arDivisionNo, row.customerNo].join('-')}`,
-        customerName: row.shipToName ?? row.customerName,
+        customerName: row.customerName,
+        shipToCode: row.shipToCode ?? '',
+        shipToName: row.shipToName ?? row.customerName,
         dateCreated: dayjs(row.dateCreated).format('MM-DD-YYYY'),
         expireDate: dayjs(row.expireDate).format('MM-DD-YYYY'),
         subTotalAmt: new Decimal(row.subTotalAmt).toNumber(),
@@ -140,6 +142,8 @@ const cartsColumnNames:ColumnNames<RepOpenCart> = {
     dateCreated: 'Date Created',
     customerNo: 'Customer #',
     customerName: 'Customer Name',
+    shipToCode: 'Ship To Code',
+    shipToName: 'Ship To',
     expireDate: 'Expire Date',
     subTotalAmt: 'Subtotal',
     name: 'Created By'

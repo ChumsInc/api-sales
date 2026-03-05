@@ -24,11 +24,11 @@ export async function loadRepCarts({userId, salespersonNo}: LoadRepCartsProps): 
                             c.CustomerName AS customerName,
                             NULL           AS shipToCode,
                             NULL           AS shipToName,
-                            ch.shipExpireDate,
+                            ch.shipExpireDate as expireDate,
                             ch.subTotalAmt,
                             ch.comment,
                             u.email,
-                            u.name,
+                            u.name,                        
                             u.accountType
                      FROM (SELECT DISTINCT Company, ARDivisionNo, CustomerNo
                            FROM users.user_AR_Customer
@@ -44,6 +44,7 @@ export async function loadRepCarts({userId, salespersonNo}: LoadRepCartsProps): 
                               LEFT JOIN users.users u ON u.id = ch.createdByUserId
                      WHERE c.Company = 'chums'
                        AND ch.shipToCode IS NULL
+                       AND ch.orderStatus not in ('X', 'Z')
                        AND (oh.SalesOrderNo IS NOT NULL OR ch.shipExpireDate > DATE(NOW()))
                        AND (IFNULL(oh.OrderType, '') = '' OR oh.OrderType <> 'S')
 
@@ -83,6 +84,7 @@ export async function loadRepCarts({userId, salespersonNo}: LoadRepCartsProps): 
                      WHERE c.Company = 'chums'
                        AND (oh.SalesOrderNo IS NOT NULL OR ch.shipExpireDate > DATE(NOW()))
                        AND (IFNULL(oh.OrderType, '') = '' OR oh.OrderType <> 'S')
+                       AND ch.orderStatus not in ('X', 'Z')
         `;
         const [rows] = await mysql2Pool.query<RepOpenCartRow[]>(sql, {userId, salespersonNo});
         return rows;
