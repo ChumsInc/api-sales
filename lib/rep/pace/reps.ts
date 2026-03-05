@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import {mysql2Pool} from "chums-local-modules";
-import {LoadRepPaceProps, LoadRepProps, RepPace, RepTotal, SalespersonRow} from "./types.js";
-import {RowDataPacket} from "mysql2";
+import type {LoadRepPaceProps, LoadRepProps, RepPace, RepTotal, SalespersonRow} from "./types.js";
+import type {RowDataPacket} from "mysql2";
 import {Decimal} from "decimal.js";
 import {loadManagedCustomers} from "./rep-customers.js";
 export const REP_TOTAL:RepTotal = {OpenOrders: '0', InvCYTD: '0', InvPYTD: '0', InvPY: '0', InvP2TD: '0', InvP2: '0', rate: '0', pace: '0'};
@@ -20,7 +20,7 @@ const repManagerSQL = `
                         ON mgr.Company = rep.Company AND
                            mgr.SalespersonDivisionNo = rep.SalesManagerDivisionNo AND
                            mgr.SalespersonNo = rep.SalesManagerNo
-    WHERE rep.Company = :Company
+    WHERE rep.Company = 'chums'
       AND rep.SalespersonDivisionNo = :SalespersonDivisionNo
       AND rep.SalespersonNo = :SalespersonNo`;
 
@@ -32,7 +32,7 @@ const repInfoSQL = `
            rep.EmailAddress,
            IF(IFNULL(rep.UDF_TERMINATED, 'N') = 'N', 1, 0) AS Active
     FROM c2.ar_salesperson rep
-    WHERE rep.Company = :Company
+    WHERE rep.Company = 'chums'
       AND rep.SalespersonDivisionNo = :SalespersonDivisionNo
       AND rep.SalespersonNo = :SalespersonNo`;
 
@@ -46,7 +46,7 @@ const managedRepsSQL = `
     FROM c2.ar_salesperson s
              INNER JOIN users.user_AR_Customer u
                         USING (Company, SalespersonDivisionNo, SalespersonNo)
-    WHERE s.Company = :Company
+    WHERE s.Company = 'chums'
       AND IFNULL(s.UDF_TERMINATED, '') <> 'Y'
       AND IFNULL(s.SalesManagerDivisionNo, '') = :SalespersonDivisionNo
       AND IFNULL(s.SalesManagerNo, '') = :SalespersonNo
@@ -69,7 +69,7 @@ const managedRepsSQL = `
              INNER JOIN users.user_AR_Customer c
                         ON c.Company = sr.Company AND c.SalespersonDivisionNo = sr.SalespersonDivisionNo AND
                            c.SalespersonNo = sr.SalespersonNo
-    WHERE s.Company = :Company
+    WHERE s.Company = 'chums'
       AND IFNULL(s.UDF_TERMINATED, '') <> 'Y'
       AND IFNULL(s.SalesManagerDivisionNo, '') = :SalespersonDivisionNo
       AND IFNULL(s.SalesManagerNo, '') = :SalespersonNo
@@ -89,7 +89,7 @@ const managedRepsSQL = `
                         USING (Company, SalespersonDivisionNo, SalespersonNo)
              INNER JOIN c2.ar_customer a
                         USING (Company, ARDivisionNo, CustomerNo)
-    WHERE s.Company = :Company
+    WHERE s.Company = 'chums'
       AND IFNULL(s.SalesManagerDivisionNo, '') = :SalespersonDivisionNo
       AND IFNULL(s.SalesManagerNo, '') = :SalespersonNo
       AND c.userid = :userid
@@ -114,7 +114,7 @@ const managedRepsSQL = `
                             AND c.SalespersonNo = sr.SalespersonNo
              INNER JOIN c2.ar_customer a
                         ON a.Company = c.Company AND a.ARDivisionNo = c.ARDivisionNo AND a.CustomerNo = c.CustomerNo
-    WHERE s.Company = :Company
+    WHERE s.Company = 'chums'
       AND IFNULL(s.SalesManagerDivisionNo, '') = :SalespersonDivisionNo
       AND IFNULL(s.SalesManagerNo, '') = :SalespersonNo
       AND c.userid = :userid
@@ -132,7 +132,7 @@ const managedRepsSQL = `
                         USING (Company, SalespersonDivisionNo, SalespersonNo)
              INNER JOIN c2.ar_customer a
                         USING (Company, ARDivisionNo, CustomerNo)
-    WHERE s.Company = :Company
+    WHERE s.Company = 'chums'
       AND s.SalesManagerDivisionNo = :SalespersonDivisionNo
       AND s.SalesManagerNo = :SalespersonNo
       AND c.userid = :userid
@@ -178,13 +178,11 @@ const availableRepsSQL = `
 
 
 export async function loadRepInfo({
-                               Company,
                                SalespersonDivisionNo,
                                SalespersonNo
                            }: LoadRepProps): Promise<SalespersonRow | null> {
     try {
         const [rows] = await mysql2Pool.query<(SalespersonRow & RowDataPacket)[]>(repInfoSQL, {
-            Company,
             SalespersonDivisionNo,
             SalespersonNo
         });
@@ -225,13 +223,11 @@ export async function loadUserReps(userid: number): Promise<SalespersonRow[]> {
 }
 
 export async function loadRepManagers({
-                                   Company,
                                    SalespersonDivisionNo,
                                    SalespersonNo
                                }: LoadRepProps): Promise<SalespersonRow | null> {
     try {
         const [rows] = await mysql2Pool.query<(SalespersonRow & RowDataPacket)[]>(repManagerSQL, {
-            Company,
             SalespersonDivisionNo,
             SalespersonNo
         });
@@ -273,14 +269,12 @@ export async function loadUserRep(userid: number): Promise<SalespersonRow | null
 }
 
 export async function loadManagedReps({
-                                          Company,
                                           SalespersonDivisionNo,
                                           SalespersonNo,
                                           userid
                                       }: LoadRepProps): Promise<SalespersonRow[]> {
     try {
         const [rows] = await mysql2Pool.query<(SalespersonRow & RowDataPacket)[]>(managedRepsSQL, {
-            Company,
             SalespersonDivisionNo,
             SalespersonNo,
             userid
@@ -300,7 +294,6 @@ export async function loadManagedReps({
 }
 
 export async function loadRepPace({
-                                      Company,
                                       SalespersonDivisionNo = '',
                                       SalespersonNo = '',
                                       minDate,
@@ -309,7 +302,7 @@ export async function loadRepPace({
                                       groupByCustomer = false
                                   }: LoadRepPaceProps): Promise<RepPace | null> {
     try {
-        let rep = await loadRepInfo({Company, SalespersonDivisionNo, SalespersonNo});
+        let rep = await loadRepInfo({SalespersonDivisionNo, SalespersonNo});
         // let pace: RepPace;
         if (!rep) {
             const user = await loadUserRep(userid);
@@ -318,15 +311,14 @@ export async function loadRepPace({
             }
             SalespersonDivisionNo = user.SalespersonDivisionNo;
             SalespersonNo = user.SalespersonNo;
-            rep = await loadRepInfo({Company, SalespersonDivisionNo, SalespersonNo});
+            rep = await loadRepInfo({SalespersonDivisionNo, SalespersonNo});
         }
         if (!rep) {
             return null;
         }
         rep.total = {...REP_TOTAL};
-        const subReps = await loadManagedReps({Company, SalespersonDivisionNo, SalespersonNo, userid});
+        const subReps = await loadManagedReps({SalespersonDivisionNo, SalespersonNo, userid});
         const repCustomers = await loadManagedCustomers({
-            Company,
             SalespersonDivisionNo,
             SalespersonNo,
             minDate,

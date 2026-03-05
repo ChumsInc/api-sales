@@ -1,7 +1,4 @@
-import Decimal from "decimal.js";
-import Debug from 'debug';
-
-const debug = Debug('chums:lib:rep:pace:utils');
+import {Decimal} from "decimal.js";
 
 export function calcGrowthRate(current:string|number|Decimal, prev: string|number|Decimal):Decimal {
     if (new Decimal(prev).eq(0)) {

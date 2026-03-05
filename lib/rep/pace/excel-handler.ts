@@ -1,19 +1,29 @@
 import Debug from "debug";
-import {buildWorkBook, buildXLSXHeaders, resultToExcelSheet, WorkBookSheets, WorkSheet} from 'chums-local-modules';
+import {
+    buildWorkBook,
+    buildXLSXHeaders,
+    type ColumnNames,
+    resultToExcelSheet,
+    type WorkBookSheets,
+    type WorkSheet
+} from 'chums-local-modules';
 import {loadRepPace, REP_TOTAL} from './reps.js';
 import dayjs from "dayjs";
-import {
+import type {
     CustomerRow,
+    ExcelCustomerFields,
+    ExcelRepFields,
     ExcelRepRow,
-    ExcelStandardColumnList,
-    KeyedHeaderObject,
+    ExcelSubRepFields,
     LoadRepPaceProps,
     RepPace,
+    RepPaceFields,
+    RepTotal,
     SalespersonRow
 } from "./types.js";
 import {Decimal} from "decimal.js";
-import {Request, Response} from "express";
-import {RowDataPacket} from "mysql2";
+import type {Request, Response} from "express";
+import type {ValidatedUserProfile} from "chums-types";
 
 const debug = Debug('chums:lib:sales:rep:rep-pace');
 
@@ -33,7 +43,7 @@ function parseRep(rep: SalespersonRow): ExcelRepRow {
 function buildStandardColumns({minDate, maxDate}: {
     minDate: string;
     maxDate: string;
-}): ExcelStandardColumnList {
+}): ColumnNames<RepPaceFields> {
     const _fromDate = dayjs(minDate);
     const _toDate = dayjs(maxDate);
     return {
@@ -48,8 +58,8 @@ function buildStandardColumns({minDate, maxDate}: {
     };
 }
 
-function repReducer(accumulator: ExcelRepRow, currentValue: ExcelRepRow) {
-    const acc: ExcelRepRow = {...accumulator};
+function repReducer(accumulator: RepTotal, currentValue: ExcelRepRow | CustomerRow): RepTotal {
+    const acc: RepTotal = {...accumulator};
     acc.OpenOrders = new Decimal(acc.OpenOrders).add(currentValue.OpenOrders || 0).toString();
     acc.InvCYTD = new Decimal(acc.InvCYTD).add(currentValue.InvCYTD || 0).toString();
     acc.InvPYTD = new Decimal(acc.InvPYTD).add(currentValue.InvPYTD || 0).toString();
@@ -62,19 +72,18 @@ function repReducer(accumulator: ExcelRepRow, currentValue: ExcelRepRow) {
     acc.pace = new Decimal(acc.InvPY).eq(0)
         ? new Decimal(acc.InvCYTD).add(acc.OpenOrders).toString()
         : new Decimal(acc.rate).add(1).times(acc.InvPY).toString();
-
     return acc;
 }
 
-function repSubRepsTotal(subReps: (RepPace | null)[] = []) {
+function repSubRepsTotal(subReps: (RepPace | null)[] = []): RepTotal {
     return subReps
         .filter(row => !!row && (row.rep.Active || !new Decimal(row.rep.total.pace ?? '0').eq(0)))
         .map(row => parseRep(row!.rep))
-        .reduce(repReducer, REP_TOTAL as ExcelRepRow);
+        .reduce(repReducer, REP_TOTAL);
 }
 
-function repCustomersTotal(repCustomers: CustomerRow[] = []): ExcelRepRow {
-    return (repCustomers as unknown as ExcelRepRow[]).reduce(repReducer, REP_TOTAL as ExcelRepRow);
+function repCustomersTotal(repCustomers: CustomerRow[] = []): RepTotal {
+    return repCustomers.reduce(repReducer, REP_TOTAL);
 }
 
 function formatWorkSheet(workSheet: WorkSheet): WorkSheet {
@@ -95,25 +104,29 @@ function formatWorkSheet(workSheet: WorkSheet): WorkSheet {
 }
 
 
-async function buildRepTotalSheet(pace: RepPace, standardColumns: ExcelStandardColumnList) {
+async function buildRepTotalSheet(pace: RepPace, standardColumns: ColumnNames<RepPaceFields>) {
     const {Salesperson, SalespersonName, ...repTotal} = parseRep(pace.rep);
     const subRepTotal = repSubRepsTotal(pace.repSubReps);
     const customerTotal = repCustomersTotal(pace.repCustomers);
 
-    const data = [
+    const data: ExcelRepFields[] = [
         {account: 'ALL', name: 'Assigned Reps', email: '', ...subRepTotal},
         {account: 'ALL', name: 'Assigned Customers', email: '', ...customerTotal},
         {account: 'ALL', name: 'Total', email: '', ...repTotal},
     ];
+    const columnNames: ColumnNames<ExcelRepFields> = {
+        account: 'Account',
+        name: 'Group',
+        email: '--',
+        ...standardColumns
+    }
 
-    const workSheet = resultToExcelSheet(data as RowDataPacket[],
-        {account: 'Account', name: 'Group', email: '--', ...standardColumns},
-        true);
+    const workSheet = resultToExcelSheet(data, columnNames, true);
 
     return formatWorkSheet(workSheet);
 }
 
-async function buildSubRepSheet(pace: RepPace, standardColumns: ExcelStandardColumnList) {
+async function buildSubRepSheet(pace: RepPace, standardColumns: ColumnNames<RepPaceFields>) {
     const subRepTotal = repSubRepsTotal(pace.repSubReps);
     const subRepRows = pace.repSubReps
         .filter(row => !!row && (row.rep.Active || !new Decimal(row.rep.total.pace).eq(0)))
@@ -124,16 +137,21 @@ async function buildSubRepSheet(pace: RepPace, standardColumns: ExcelStandardCol
         {...subRepTotal, Salesperson: 'TOTAL', SalespersonName: '---', EmailAddress: ''},
     ];
 
-    const workSheet = resultToExcelSheet(data as RowDataPacket[],
-        {Salesperson: 'Rep Acct', SalespersonName: 'Rep Name', EmailAddress: 'Email', ...standardColumns},
-        true);
+    const columnNames: ColumnNames<ExcelSubRepFields> = {
+        Salesperson: 'Rep Acct',
+        SalespersonName: 'Rep Name',
+        EmailAddress: 'Email',
+        ...standardColumns
+    }
+
+    const workSheet = resultToExcelSheet(data, columnNames, true);
 
     return formatWorkSheet(workSheet);
 }
 
-async function buildCustomerSheet(pace: RepPace, standardColumns: ExcelStandardColumnList) {
+async function buildCustomerSheet(pace: RepPace, standardColumns: ColumnNames<RepPaceFields>) {
     const customerTotal = repCustomersTotal(pace.repCustomers);
-    const customers = pace.repCustomers.map(customer => {
+    const customers: ExcelCustomerFields[] = pace.repCustomers.map(customer => {
         const {ARDivisionNo, CustomerNo, CustomerName, EmailAddress, ...rest} = customer;
         return {
             account: `${ARDivisionNo}-${CustomerNo}`,
@@ -148,25 +166,26 @@ async function buildCustomerSheet(pace: RepPace, standardColumns: ExcelStandardC
         {account: 'TOTAL', name: '---', ...customerTotal},
     ];
 
-    const workSheet = resultToExcelSheet(data as RowDataPacket[],
-        {account: 'Customer Acct', name: 'Customer Name', email: 'EMail', ...standardColumns}
-        , true);
+    const columnNames: ColumnNames<ExcelCustomerFields> = {
+        account: 'Customer Acct',
+        name: 'Customer Name',
+        email: 'EMail',
+        ...standardColumns
+    }
+    const workSheet = resultToExcelSheet(data, columnNames, true);
 
     return formatWorkSheet(workSheet);
 }
 
-export async function getRepPaceXLSX(req: Request, res: Response) {
+export async function getRepPaceXLSX(req: Request, res: Response<unknown, ValidatedUserProfile>) {
     try {
-        const userid = res.locals.profile?.user?.id ?? 0;
         const params: LoadRepPaceProps = {
-            ...req.query,
-            Company: req.params.Company,
-            SalespersonDivisionNo: req.params.SalespersonDivisionNo,
-            SalespersonNo: req.params.SalespersonNo,
-            minDate: req.params.minDate,
-            maxDate: req.params.maxDate,
+            SalespersonDivisionNo: req.params.SalespersonDivisionNo as string ?? req.query.SalespersonDivisionNo as string,
+            SalespersonNo: req.params.SalespersonNo as string ?? req.query.SalespersonNo as string,
+            minDate: req.params.minDate as string ?? req.query.minDate as string,
+            maxDate: req.params.maxDate as string ?? req.query.maxDate as string,
             groupByCustomer: true,
-            userid: res.locals.profile?.user?.id ?? 0,
+            userid: res.locals.profile!.user.id,
         }
         const repPace = await loadRepPace(params);
         if (!repPace) {
@@ -179,11 +198,8 @@ export async function getRepPaceXLSX(req: Request, res: Response) {
         sheets['Assigned Customers'] = await buildCustomerSheet(repPace, standardColumns);
 
         const workBook = await buildWorkBook(sheets);
-        const filename = `Rep_Pace_${req.params.SalespersonDivisionNo}-${req.params.SalespersonNo}_${dayjs(req.params.maxDate).format('YYYY-MM-DD')}.xlsx`;
-        const headers: KeyedHeaderObject = buildXLSXHeaders(filename);
-        Object.keys(headers).forEach(key => {
-            res.setHeader(key, headers[key]);
-        })
+        const filename = `Rep_Pace_${params.SalespersonDivisionNo}-${params.SalespersonNo}_${dayjs(params.maxDate).format('YYYY-MM-DD')}.xlsx`;
+        res.setHeaders(buildXLSXHeaders(filename));
         res.send(workBook);
     } catch (err: unknown) {
         if (err instanceof Error) {

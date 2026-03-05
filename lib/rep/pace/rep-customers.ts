@@ -1,6 +1,6 @@
-import {CustomerRow, LoadRepPaceProps, LoadRepProps} from "./types.js";
+import type {CustomerRow, LoadRepPaceProps} from "./types.js";
 import {mysql2Pool} from "chums-local-modules";
-import {RowDataPacket} from "mysql2";
+import type {RowDataPacket} from "mysql2";
 import {Decimal} from "decimal.js";
 import Debug from "debug";
 import {calcGrowthRate, calcPace} from "./utils.js";
@@ -49,7 +49,7 @@ const managedCustomersSQL = `
                               USING (Company, ARDivisionNo, CustomerNo)
                    LEFT JOIN c2.SO_ShipToAddress s USING (Company, ARDivisionNo, CustomerNo, ShipToCode)
 
-          WHERE h.Company = :Company
+          WHERE h.Company = 'chums'
             AND c.SalespersonDivisionNo = :SalespersonDivisionNo
             AND c.SalespersonNo = :SalespersonNo
             AND IFNULL(s.SalespersonDivisionNo, c.SalespersonDivisionNo) = c.SalespersonDivisionNo
@@ -91,7 +91,7 @@ const managedCustomersSQL = `
                               USING (Company, ARDivisionNo, CustomerNo)
                    INNER JOIN c2.ar_invoicehistoryheader h
                               USING (Company, ARDivisionNo, CustomerNo, ShipToCode)
-          WHERE h.Company = :Company
+          WHERE h.Company = 'chums'
             AND s.SalespersonDivisionNo = :SalespersonDivisionNo
             AND s.SalespersonNo = :SalespersonNo
             AND (
@@ -121,7 +121,7 @@ const managedCustomersSQL = `
                    INNER JOIN c2.SO_SalesOrderHeader h
                               USING (Company, ARDivisionNo, CustomerNo)
                    LEFT JOIN c2.SO_ShipToAddress s USING (Company, ARDivisionNo, CustomerNo, ShipToCode)
-          WHERE h.Company = :Company
+          WHERE h.Company = 'chums'
             AND c.SalespersonDivisionNo = :SalespersonDivisionNo
             AND c.SalespersonNo = :SalespersonNo
             AND h.OrderType IN ('B', 'S')
@@ -149,7 +149,7 @@ const managedCustomersSQL = `
                               USING (Company, ARDivisionNo, CustomerNo)
                    INNER JOIN c2.SO_SalesOrderHeader h
                               USING (Company, ARDivisionNo, CustomerNo, ShipToCode)
-          WHERE h.Company = :Company
+          WHERE h.Company = 'chums'
             AND s.SalespersonDivisionNo = :SalespersonDivisionNo
             AND s.SalespersonNo = :SalespersonNo
             AND h.OrderType IN ('B', 'S')
@@ -163,11 +163,16 @@ const managedCustomersSQL = `
     ORDER BY InvCYTD DESC, INVPY DESC, INVP2 DESC
 `;
 
-export async function loadManagedCustomers({Company, SalespersonDivisionNo, SalespersonNo, maxDate, minDate, groupByCustomer}:LoadRepPaceProps):Promise<CustomerRow[]> {
+export async function loadManagedCustomers({
+                                               SalespersonDivisionNo,
+                                               SalespersonNo,
+                                               maxDate,
+                                               minDate,
+                                               groupByCustomer
+                                           }: LoadRepPaceProps): Promise<CustomerRow[]> {
     try {
         debug('loadManagedCustomers()', SalespersonDivisionNo, SalespersonNo);
         const [repCustomers] = await mysql2Pool.query<(CustomerRow & RowDataPacket)[]>(managedCustomersSQL, {
-            Company,
             SalespersonDivisionNo,
             SalespersonNo,
             minDate,
@@ -189,7 +194,7 @@ export async function loadManagedCustomers({Company, SalespersonDivisionNo, Sale
                 pace
             }
         })
-    } catch(err:unknown) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             debug("loadManagedCustomers()", err.message);
             return Promise.reject(err);

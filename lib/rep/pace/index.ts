@@ -1,13 +1,14 @@
-import {Request, Response, Router} from 'express'
-import {loadRepPace} from "./reps.js";
-import {loadRepInfo, loadRepManagers, loadUserReps} from "./reps.js";
+import type {Request, Response} from 'express'
+import {loadRepInfo, loadRepManagers, loadRepPace, loadUserReps} from "./reps.js";
 import Debug from "debug";
-import {LoadRepPaceProps, LoadRepProps} from "./types.js";
+import type {LoadRepPaceProps, LoadRepProps} from "./types.js";
+import type {ValidatedUser} from "chums-local-modules";
+
 export {getRepPaceXLSX} from './excel-handler.js'
 
 const debug = Debug('chums:lib:rep:pace');
 
-async function getRepList(req:Request, res:Response) {
+export async function getRepList(req: Request, res: Response) {
     try {
         const userid = res.locals.profile?.user?.id ?? 0;
         const reps = loadUserReps(userid);
@@ -21,21 +22,19 @@ async function getRepList(req:Request, res:Response) {
     }
 }
 
-export async function getRepPace(req:Request, res:Response) {
+export async function getRepPace(req: Request, res: Response<unknown, ValidatedUser>) {
     try {
-        const params:LoadRepPaceProps = {
-            ...req.query,
-            Company: req.params.Company,
-            SalespersonDivisionNo: req.params.SalespersonDivisionNo,
-            SalespersonNo: req.params.SalespersonNo,
-            minDate: req.params.minDate,
-            maxDate: req.params.maxDate,
+        const params: LoadRepPaceProps = {
+            SalespersonDivisionNo: req.params.SalespersonDivisionNo as string ?? req.query.SalespersonDivisionNo as string,
+            SalespersonNo: req.params.SalespersonNo as string ?? req.query.SalespersonNo as string,
+            minDate: req.params.minDate as string ?? req.query.minDate as string,
+            maxDate: req.params.maxDate as string ?? req.query.maxDate as string,
             groupByCustomer: true,
-            userid: res.locals.profile?.user?.id ?? 0,
+            userid: res.locals.profile!.user.id,
         };
         const pace = await loadRepPace(params);
         res.json({pace});
-    } catch(err:unknown) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             debug("getRepPace()", err.message);
             return res.json({error: err.message, name: err.name});
@@ -44,13 +43,12 @@ export async function getRepPace(req:Request, res:Response) {
     }
 }
 
-export async function getRepManagers(req:Request, res:Response) {
+export async function getRepManagers(req: Request, res: Response<unknown, ValidatedUser>) {
     try {
-        const params:LoadRepProps = {
-            Company: req.params.Company,
-            SalespersonDivisionNo: req.params.SalespersonDivisionNo,
-            SalespersonNo: req.params.SalespersonNo,
-            userid: res.locals.profile?.user?.id ?? 0,
+        const params: LoadRepProps = {
+            SalespersonDivisionNo: req.params.SalespersonDivisionNo as string,
+            SalespersonNo: req.params.SalespersonNo as string,
+            userid: res.locals.profile!.user.id,
         };
         const rep = await loadRepInfo(params);
         if (!rep) {
@@ -58,7 +56,7 @@ export async function getRepManagers(req:Request, res:Response) {
         }
         rep.manager = await loadRepManagers({...rep});
         res.json({rep});
-    } catch(err:unknown) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             debug("getRepManagers()", err.message);
             return res.json({error: err.message, name: err.name});

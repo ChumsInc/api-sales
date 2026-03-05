@@ -8,8 +8,18 @@ export interface SalespersonRow {
     manager?: SalespersonRow|null;
     total: RepTotal;
 }
+export interface RepPaceFields {
+    OpenOrders: string|number;
+    InvCYTD: string|number;
+    InvPYTD: string|number;
+    InvPY: string|number;
+    InvP2TD: string|number;
+    InvP2: string|number;
+    rate: string|number;
+    pace: string|number;
+}
 
-export interface CustomerRow {
+export interface CustomerRow extends RepPaceFields {
     Company: string;
     SalespersonDivisionNo: string;
     SalespersonNo: string;
@@ -18,29 +28,11 @@ export interface CustomerRow {
     ShipToCode: string;
     CustomerName: string;
     EmailAddress: string|null;
-    OpenOrders: string|number;
-    InvCYTD: string|number;
-    InvPYTD: string|number;
-    InvPY: string|number;
-    InvP2TD: string|number;
-    InvP2: string|number;
-    rate: string|number;
-    pace: string|number;
 }
 
-export interface RepTotal {
-    OpenOrders: string|number;
-    InvCYTD: string|number;
-    InvPYTD: string|number;
-    InvPY: string|number;
-    InvP2TD: string|number;
-    InvP2: string|number;
-    rate: string|number;
-    pace: string|number;
-}
+export type RepTotal = RepPaceFields;
 
 export interface LoadRepProps {
-    Company: string;
     SalespersonDivisionNo: string;
     SalespersonNo: string;
     userid?: number;
@@ -79,4 +71,22 @@ export interface ExcelStandardColumnList {
 
 export interface KeyedHeaderObject {
     [key:string]: string;
+}
+
+export interface ExcelRepFields extends RepPaceFields {
+    account: string;
+    name: string;
+    email: string|null;
+}
+
+export interface ExcelSubRepFields extends RepPaceFields {
+    Salesperson: string;
+    SalespersonName: string;
+    EmailAddress?: string;
+}
+
+export interface ExcelCustomerFields extends RepPaceFields {
+    account: string;
+    name: string;
+    email: string|null;
 }
