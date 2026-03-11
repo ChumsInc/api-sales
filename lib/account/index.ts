@@ -3,7 +3,6 @@ import {loadAccountInvoices, loadYearInvoiceCount} from "./invoices.js";
 import {loadMissingTaxSchedules} from "./missing-tax-shedule.js";
 import {Request, Response} from "express";
 import {ValidatedUserProfile} from "chums-types";
-import dayjs from "dayjs";
 
 const debug = Debug('chums:lib:account');
 
@@ -26,7 +25,7 @@ export async function renderMissingTaxSchedules(req: Request, res: Response): Pr
     }
 }
 
-export async function getMissingTaxSchedules(req: Request, res: Response):Promise<void> {
+export async function getMissingTaxSchedules(req: Request, res: Response): Promise<void> {
     try {
         const accounts = await loadMissingTaxSchedules();
         res.json({accounts});
@@ -41,14 +40,14 @@ export async function getMissingTaxSchedules(req: Request, res: Response):Promis
     }
 }
 
-export async function getAccountInvoices(req: Request, res: Response<unknown, ValidatedUserProfile>):Promise<void> {
+export async function getAccountInvoices(req: Request, res: Response<unknown, ValidatedUserProfile>): Promise<void> {
     try {
         const params = {
             user_id: res.locals.profile!.user.id,
             Company: req.params.Company as string,
             ARDivisionNo: req.params.ARDivisionNo as string,
             CustomerNo: req.params.CustomerNo as string,
-            year: req.query.year as string ?? dayjs().format('YYYY'),
+            year: req.query.year as string,
             offset: req.query.offset as string || 0,
             limit: req.query.limit as string || 1000
         };
@@ -64,7 +63,7 @@ export async function getAccountInvoices(req: Request, res: Response<unknown, Va
     }
 }
 
-export async function getAccountInvoiceCount(req: Request, res: Response):Promise<void> {
+export async function getAccountInvoiceCount(req: Request, res: Response): Promise<void> {
     try {
         const params = {
             user_id: res.locals.profile!.user.id,
