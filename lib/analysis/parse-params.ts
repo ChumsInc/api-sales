@@ -1,11 +1,8 @@
-import Debug from "debug";
 import dayjs from "dayjs";
 import {convertString} from './convertToRegex.js';
 import {SAParams, SARequestParams} from "./sa-types.js";
 
-const debug = Debug('chums:lib:analysis:query-handler');
-
-export function parseSortField(sortField:string): string[] {
+export function parseSortField(sortField: string): string[] {
     switch (sortField) {
         case 'sales':
             return ['p1_sales DESC', 'p2_sales DESC'];
@@ -26,9 +23,9 @@ export interface ParseParamsProps {
     query: SARequestParams;
     body: SARequestParams;
 }
-export function parseRequestParams({query, body}:ParseParamsProps):SAParams {
+
+export function parseRequestParams({query, body}: ParseParamsProps): SAParams {
     const {
-        company,
         ARDivisionNo,
         CustomerNo = '',
         ShipToCode,
@@ -38,6 +35,7 @@ export function parseRequestParams({query, body}:ParseParamsProps):SAParams {
         CustomerType,
         CustomerGroup,
         State,
+        CountryCode,
         ShipToState,
         SalesAccount,
         CostAccount,
@@ -57,7 +55,6 @@ export function parseRequestParams({query, body}:ParseParamsProps):SAParams {
         method,
         'include-open-orders': openorders,
         'include-discounts': discounts,
-        SortField,
         sort,
         strictFilter
     } = {...body, ...query};
@@ -69,8 +66,8 @@ export function parseRequestParams({query, body}:ParseParamsProps):SAParams {
     const strict = strictFilter === '1';
 
     return {
-        discounts: !!discounts ? '1' : '',
-        openOrders: !!openorders ? '1' : '',
+        discounts: discounts ? '1' : '',
+        openOrders: openorders ? '1' : '',
         p1min: dayjs(p1min).format('YYYY-MM-DD'),
         p1max: dayjs(p1max).format('YYYY-MM-DD'),
         p2min: dayjs(p2min).format('YYYY-MM-DD'),
@@ -82,6 +79,7 @@ export function parseRequestParams({query, body}:ParseParamsProps):SAParams {
         CustomerType: convertString(CustomerType, strict) || null,
         CustomerGroup: convertString(CustomerGroup, strict) || null,
         State: convertString(State || '', strict) || null,
+        CountryCode: convertString(CountryCode || '', strict) || null,
         ShipToState: convertString(ShipToState, strict) || null,
         ItemCode: convertString(ItemCode, strict) || null,
         SalesAccount: convertString(SalesAccount, strict) || null,

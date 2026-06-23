@@ -17,6 +17,7 @@ export interface SAParams extends ParseSQLParams {
     ProductStatus: string|null;
     SalesAccount: string|null;
     SalespersonNo: string|null;
+    CountryCode: string|null;
     ShipToCode: string|null;
     ShipToState: string|null;
     SortField: string[];
