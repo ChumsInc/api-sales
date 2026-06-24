@@ -154,7 +154,7 @@ export const renderShipToAccountListXLSX = async (req: Request, res: Response<un
             type: 'buffer',
             compression: true
         });
-        const filename = new Date().toISOString();
+        const filename = `account-list.${dayjs().format('YYYYMMDD-HHmmss')}.xlsx`;
         res.setHeaders(buildXLSXHeaders(filename));
         res.send(workbook);
     } catch (err: unknown) {

@@ -89,7 +89,7 @@ function prepForRender(rows: ALCustomer[]): ALCustomer[] {
 
 export const getAccountList = async (req: Request, res: Response<unknown, ValidatedUser>): Promise<void> => {
     try {
-        const _params = await parse({...req.body, ...req.query}, res.locals.profile!.user.id);
+        const _params = parse({...req.body, ...req.query}, res.locals.profile!.user.id);
         const {rows, query, params} = await loadAccounts(_params);
         res.json({params, query, rows});
     } catch (err: unknown) {
@@ -146,7 +146,7 @@ export const renderAccountListXLSX = async (req: Request, res: Response<unknown,
             type: 'buffer',
             compression: true
         });
-        const filename = new Date().toISOString();
+        const filename = `account-list.${dayjs().format('YYYYMMDD-HHmmss')}.xlsx`;
         res.setHeaders(buildXLSXHeaders(filename));
         res.send(workbook);
     } catch (err: unknown) {
