@@ -314,7 +314,6 @@ async function loadInvoice({InvoiceNo, userId}: {
         }
         const validation = await validateUserAccount({
             id: userId,
-            Company: 'chums',
             ARDivisionNo: invoice?.ARDivisionNo,
             CustomerNo: invoice?.CustomerNo,
             ShipToCode: invoice?.ShipToCode ?? undefined,
