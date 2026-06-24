@@ -25,7 +25,7 @@ export async function loadPaceBySegment({year, month, ARDivisionNo}: LoadPaceByS
                    IFNULL(prevOpen.PrevOrderTotal, 0)
                        + IFNULL(open.OpenOrderTotal, 0) + IFNULL(held.HeldOrderTotal, 0) AS Pace
             FROM (SELECT c.Company,
-                         c.ARDivisionNo,
+                         c.ARDivisionNo,                        
                          IFNULL(IFNULL(ct.ReportAsType, c.CustomerType), 'NONE')                            AS Segment,
                          (SELECT Description
                           FROM c2.AR_CustomerType ctt
