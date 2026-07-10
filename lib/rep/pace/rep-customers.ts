@@ -1,199 +1,176 @@
-import type {CustomerRow, LoadRepPaceProps} from "./types.js";
+import type {CustomerPaceRecord, CustomerPaceRow, LoadRepPaceProps} from "./types.js";
 import {mysql2Pool} from "chums-local-modules";
-import type {RowDataPacket} from "mysql2";
-import {Decimal} from "decimal.js";
 import Debug from "debug";
-import {calcGrowthRate, calcPace} from "./utils.js";
+import {customerTotals} from "./utils.js";
 
 const debug = Debug('chums:lib:rep:pace:rep-customers');
 
-const managedCustomersSQL = `
-    SELECT t.Company,
-           :SalespersonDivisionNo                   AS SalespersonDivisionNo,
-           :SalespersonNo                           AS SalespersonNo,
-           IF(:groupByCustomer, t.ARDivisionNo, '') AS ARDivisionNo,
-           IF(:groupByCustomer, t.CustomerNo, '')   AS CustomerNo,
-           IF(:groupByCustomer, t.ShipToCode, '')   AS ShipToCode,
-           IF(:groupByCustomer, t.CustomerName, '') AS CustomerName,
-           IF(:groupByCustomer, t.EmailAddress, '') AS EmailAddress,
-           SUM(t.OpenOrders)                        AS OpenOrders,
-           SUM(t.InvCYTD)                           AS InvCYTD,
-           SUM(t.InvPYTD)                           AS InvPYTD,
-           SUM(t.InvPY)                             AS InvPY,
-           SUM(t.InvP2TD)                           AS InvP2TD,
-           SUM(t.InvP2)                             AS InvP2
-    FROM (SELECT c.Company,
-                 c.ARDivisionNo,
-                 c.CustomerNo,
-                 ''         AS ShipToCode,
-                 c.CustomerName,
-                 c.EmailAddress,
-                 0          AS OpenOrders,
-                 SUM(IF(h.InvoiceDate BETWEEN :minDate AND :maxDate,
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0)) AS InvCYTD,
-                 SUM(IF(h.InvoiceDate BETWEEN SUBDATE(:minDate, INTERVAL 1 YEAR) AND SUBDATE(:maxDate, INTERVAL 1 YEAR),
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0)) AS InvPYTD,
-                 SUM(IF(YEAR(h.InvoiceDate) = YEAR(:minDate) - 1,
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0)) AS InvPY,
-                 SUM(IF(h.InvoiceDate BETWEEN SUBDATE(:minDate, INTERVAL 2 YEAR) AND SUBDATE(:maxDate, INTERVAL 2 YEAR),
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0)) AS InvP2TD,
-                 SUM(IF(YEAR(h.InvoiceDate) = YEAR(:minDate) - 2,
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0)) AS InvP2
-          FROM c2.ar_customer c
-                   INNER JOIN c2.ar_invoicehistoryheader h
-                              USING (Company, ARDivisionNo, CustomerNo)
-                   LEFT JOIN c2.SO_ShipToAddress s USING (Company, ARDivisionNo, CustomerNo, ShipToCode)
+const sqlManagedCustomers = `
+    WITH RECURSIVE
+        UserReps (SalesManagerDivisionNo, SalesManagerNo, SalespersonDivisionNo, SalespersonNo, SalespersonName, Level)
+            AS (SELECT sp.SalesManagerDivisionNo,
+                       sp.SalesManagerNo,
+                       sp.SalespersonDivisionNo,
+                       sp.SalespersonNo,
+                       sp.SalespersonName,
+                       0 AS Level
+                FROM c2.ar_salesperson sp
+                         INNER JOIN users.UserCustomerAccess uac
+                                    ON sp.SalespersonDivisionNo LIKE uac.SalespersonDivisionNo AND
+                                       sp.SalespersonNo LIKE uac.SalespersonNo
+                WHERE uac.userId = :userId
+                  AND IFNULL(sp.UDF_TERMINATED, 'N') <> 'Y'
 
-          WHERE h.Company = 'chums'
-            AND c.SalespersonDivisionNo = :SalespersonDivisionNo
-            AND c.SalespersonNo = :SalespersonNo
-            AND IFNULL(s.SalespersonDivisionNo, c.SalespersonDivisionNo) = c.SalespersonDivisionNo
-            AND IFNULL(s.SalespersonNo, c.SalespersonNo) = c.SalespersonNo
-            AND (
-              h.InvoiceDate BETWEEN :minDate AND :maxDate
-                  OR YEAR(h.InvoiceDate) = YEAR(:minDate) - 1
-                  OR YEAR(h.InvoiceDate) = YEAR(:minDate) - 2
-              )
-            AND h.InvoiceType <> 'XD'
-          GROUP BY Company, ARDivisionNo, CustomerNo
+                UNION ALL
 
-          UNION
+                SELECT sp.SalesManagerDivisionNo,
+                       sp.SalesManagerNo,
+                       sp.SalespersonDivisionNo,
+                       sp.SalespersonNo,
+                       sp.SalespersonName,
+                       Level + 1
+                FROM c2.ar_salesperson sp
+                         INNER JOIN UserReps r ON sp.SalesManagerDivisionNo = r.SalespersonDivisionNo AND
+                                                  sp.SalesManagerNo = r.SalespersonNo
+                WHERE IFNULL(sp.UDF_TERMINATED, 'N') <> 'Y'),
+        DisinctUserReps AS (SELECT DISTINCT r.SalespersonDivisionNo, r.SalespersonNo, r.SalespersonName
+                            FROM UserReps r
+                            WHERE SalespersonDivisionNo = :salespersonDivisionNo
+                              AND SalespersonNo = :salespersonNo),
+        ReportDates AS (SELECT :fromDate                                                  AS cyFrom,
+                               :toDate                                                    AS cyTo,
+                               DATE_SUB(:fromDate, INTERVAL 1 YEAR)                       AS pyFrom,
+                               DATE_SUB(:toDate, INTERVAL 1 YEAR)                         AS pyTo,
+                               DATE_SUB(:fromDate, INTERVAL 2 YEAR)                       AS p2From,
+                               DATE_SUB(:toDate, INTERVAL 2 YEAR)                         AS p2To,
+                               MAKEDATE(YEAR(:fromDate), 1)                               AS cyStart,
+                               LAST_DAY(MAKEDATE(YEAR(:fromDate), 365))                   AS cyEnd,
+                               MAKEDATE(YEAR(:fromDate), 1) - INTERVAL 1 YEAR             AS pyStart,
+                               LAST_DAY(MAKEDATE(YEAR(:fromDate), 365)) - INTERVAL 1 YEAR AS pyEnd,
+                               MAKEDATE(YEAR(:fromDate), 1) - INTERVAL 2 YEAR             AS p2Start,
+                               LAST_DAY(MAKEDATE(YEAR(:fromDate), 365)) - INTERVAL 2 YEAR AS p2End),
+        Customers AS (SELECT c.ARDivisionNo,
+                             c.CustomerNo,
+                             NULL                                         AS ShipToCode,
+                             CONCAT_WS('-', c.ARDivisionNo, c.CustomerNo) AS CustomerCode,
+                             c.CustomerName,
+                             c.EmailAddress
+                      FROM c2.ar_customer c
+                               INNER JOIN DisinctUserReps r ON c.SalespersonDivisionNo = r.SalespersonDivisionNo AND
+                                                               c.SalespersonNo = r.SalespersonNo
+                      WHERE c.CustomerStatus = 'A'
 
-          SELECT c.Company,
-                 c.ARDivisionNo,
-                 c.CustomerNo,
-                 IFNULL(s.ShipToCode, '') AS ShipToCode,
-                 s.ShipToName,
-                 s.EmailAddress,
-                 0                        AS OpenOrders,
-                 SUM(IF(h.InvoiceDate BETWEEN :minDate AND :maxDate,
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0))               AS InvCYTD,
-                 SUM(IF(h.InvoiceDate BETWEEN SUBDATE(:minDate, INTERVAL 1 YEAR) AND SUBDATE(:maxDate, INTERVAL 1 YEAR),
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0))               AS InvPYTD,
-                 SUM(IF(YEAR(h.InvoiceDate) = YEAR(:minDate) - 1,
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0))               AS InvPY,
-                 SUM(IF(h.InvoiceDate BETWEEN SUBDATE(:minDate, INTERVAL 2 YEAR) AND SUBDATE(:maxDate, INTERVAL 2 YEAR),
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0))               AS InvP2TD,
-                 SUM(IF(YEAR(h.InvoiceDate) = YEAR(:minDate) - 2,
-                        h.TaxableSalesAmt + h.NonTaxableSalesAmt - h.DiscountAmt,
-                        0))               AS InvP2
-          FROM c2.ar_customer c
-                   INNER JOIN c2.SO_ShipToAddress s
-                              USING (Company, ARDivisionNo, CustomerNo)
-                   INNER JOIN c2.ar_invoicehistoryheader h
-                              USING (Company, ARDivisionNo, CustomerNo, ShipToCode)
-          WHERE h.Company = 'chums'
-            AND s.SalespersonDivisionNo = :SalespersonDivisionNo
-            AND s.SalespersonNo = :SalespersonNo
-            AND (
-              h.InvoiceDate BETWEEN :minDate AND :maxDate
-                  OR YEAR(h.InvoiceDate) = YEAR(:minDate) - 1
-                  OR YEAR(h.InvoiceDate) = YEAR(:minDate) - 2
-              )
-            AND h.InvoiceType <> 'XD'
-            AND (c.SalespersonDivisionNo <> s.SalespersonDivisionNo OR c.SalespersonNo <> s.SalespersonNo)
-          GROUP BY Company, ARDivisionNo, CustomerNo, ShipToCode
+                      UNION
 
-          UNION
-
-          SELECT c.Company,
-                 c.ARDivisionNo,
-                 c.CustomerNo,
-                 ''                                                  AS ShipToCode,
-                 c.CustomerName,
-                 c.EmailAddress,
-                 SUM(h.TaxableAmt + h.NonTaxableAmt - h.DiscountAmt) AS OpenOrders,
-                 0                                                   AS InvCYTD,
-                 0                                                   AS INVPYTD,
-                 0                                                   AS InvPY,
-                 0                                                   AS InvP2TD,
-                 0                                                   AS InvP2
-          FROM c2.ar_customer c
-                   INNER JOIN c2.SO_SalesOrderHeader h
-                              USING (Company, ARDivisionNo, CustomerNo)
-                   LEFT JOIN c2.SO_ShipToAddress s USING (Company, ARDivisionNo, CustomerNo, ShipToCode)
-          WHERE h.Company = 'chums'
-            AND c.SalespersonDivisionNo = :SalespersonDivisionNo
-            AND c.SalespersonNo = :SalespersonNo
-            AND h.OrderType IN ('B', 'S')
-            AND YEAR(h.ShipExpireDate) <= YEAR(:maxDate)
-            AND IFNULL(s.SalespersonDivisionNo, c.SalespersonDivisionNo) = c.SalespersonDivisionNo
-            AND IFNULL(s.SalespersonNo, c.SalespersonNo) = c.SalespersonNo
-          GROUP BY Company, ARDivisionNo, CustomerNo
-
-          UNION
-
-          SELECT c.Company,
-                 c.ARDivisionNo,
-                 c.CustomerNo,
-                 IFNULL(s.ShipToCode, '')                            AS ShipToCode,
-                 s.ShipToName,
-                 s.EmailAddress,
-                 SUM(h.TaxableAmt + h.NonTaxableAmt - h.DiscountAmt) AS OpenOrders,
-                 0                                                   AS InvCYTD,
-                 0                                                   AS INVPYTD,
-                 0                                                   AS InvPY,
-                 0                                                   AS InvP2TD,
-                 0                                                   AS InvP2
-          FROM c2.ar_customer c
-                   INNER JOIN c2.SO_ShipToAddress s
-                              USING (Company, ARDivisionNo, CustomerNo)
-                   INNER JOIN c2.SO_SalesOrderHeader h
-                              USING (Company, ARDivisionNo, CustomerNo, ShipToCode)
-          WHERE h.Company = 'chums'
-            AND s.SalespersonDivisionNo = :SalespersonDivisionNo
-            AND s.SalespersonNo = :SalespersonNo
-            AND h.OrderType IN ('B', 'S')
-            AND YEAR(h.ShipExpireDate) <= YEAR(:maxDate)
-            AND (c.SalespersonDivisionNo <> s.SalespersonDivisionNo OR c.SalespersonNo <> s.SalespersonNo)
-          GROUP BY Company, ARDivisionNo, CustomerNo, ShipToCode) t
-    GROUP BY Company,
-             IF(:groupByCustomer, ARDivisionNo, ''),
-             IF(:groupByCustomer, CustomerNo, ''),
-             IF(:groupByCustomer, ShipToCode, '')
-    ORDER BY InvCYTD DESC, INVPY DESC, INVP2 DESC
+                      SELECT st.ARDivisionNo,
+                             st.CustomerNo,
+                             st.ShipToCode,
+                             CONCAT_WS('-', c.ARDivisionNo, c.CustomerNo, st.ShipToCode) AS CustomerCode,
+                             st.ShipToName,
+                             st.EmailAddress
+                      FROM c2.ar_customer c
+                               INNER JOIN SO_ShipToAddress st
+                                          ON c.ARDivisionNo = st.ARDivisionNo AND c.CustomerNo = st.CustomerNo
+                               INNER JOIN DisinctUserReps r ON st.SalespersonDivisionNo = r.SalespersonDivisionNo AND
+                                                               st.SalespersonNo = r.SalespersonNo
+                      WHERE c.CustomerStatus = 'A'
+                        AND NOT (c.SalespersonDivisionNo = st.SalespersonDivisionNo AND
+                                 c.SalespersonNo = st.SalespersonNo)),
+        Invoices AS (SELECT c.CustomerCode,
+                            SUM(
+                                    IF(ih.InvoiceDate BETWEEN d.cyFrom AND d.cyTo,
+                                       ih.TaxableSalesAmt + ih.NonTaxableSalesAmt - ih.DiscountAmt,
+                                       0
+                                    )
+                            ) AS InvCYTD,
+                            SUM(
+                                    IF(ih.InvoiceDate BETWEEN d.cyStart AND d.cyEnd,
+                                       ih.TaxableSalesAmt + ih.NonTaxableSalesAmt - ih.DiscountAmt,
+                                       0
+                                    )
+                            ) AS InvCY,
+                            SUM(
+                                    IF(ih.InvoiceDate BETWEEN d.pyFrom AND d.pyTo,
+                                       ih.TaxableSalesAmt + ih.NonTaxableSalesAmt - ih.DiscountAmt,
+                                       0
+                                    )
+                            ) AS InvPYTD,
+                            SUM(
+                                    IF(ih.InvoiceDate BETWEEN d.pyStart AND d.pyEnd,
+                                       ih.TaxableSalesAmt + ih.NonTaxableSalesAmt - ih.DiscountAmt,
+                                       0
+                                    )
+                            ) AS InvPY,
+                            SUM(
+                                    IF(ih.InvoiceDate BETWEEN d.p2From AND d.p2To,
+                                       ih.TaxableSalesAmt + ih.NonTaxableSalesAmt - ih.DiscountAmt,
+                                       0
+                                    )
+                            ) AS InvP2TD,
+                            SUM(
+                                    IF(ih.InvoiceDate BETWEEN d.p2Start AND d.p2End,
+                                       ih.TaxableSalesAmt + ih.NonTaxableSalesAmt - ih.DiscountAmt,
+                                       0
+                                    )
+                            ) AS InvP2
+                     FROM ReportDates d,
+                          c2.ar_invoicehistoryheader ih
+                              INNER JOIN Customers c
+                                         ON ih.ARDivisionNo = c.ARDivisionNo AND ih.CustomerNo = c.CustomerNo AND
+                                            IFNULL(ih.ShipToCode, '') LIKE IFNULL(c.ShipToCode, '%')
+                     WHERE ih.InvoiceType <> 'XD'
+                       AND ih.InvoiceDate BETWEEN d.p2Start AND d.cyTo
+                     GROUP BY c.CustomerCode),
+        OpenOrders AS (SELECT c.CustomerCode,
+                              SUM(oh.TaxableAmt + oh.NonTaxableAmt - oh.DiscountAmt - oh.InvoicedAmt) AS OpenTotal
+                       FROM ReportDates d,
+                            c2.SO_SalesOrderHistoryHeader oh
+                                INNER JOIN Customers c
+                                           ON oh.ARDivisionNo = c.ARDivisionNo AND oh.CustomerNo = c.CustomerNo AND
+                                              IFNULL(oh.ShipToCode, '') LIKE IFNULL(c.ShipToCode, '%')
+                       WHERE OrderType NOT IN ('M', 'Q')
+                         AND OrderStatus NOT IN ('C', 'X')
+                         AND oh.ShipExpireDate <= d.cyEnd
+                       GROUP BY c.CustomerCode)
+    SELECT c.CustomerCode,
+           c.CustomerName,
+           c.EmailAddress,
+           o.OpenTotal,
+           i.InvCYTD,
+           i.InvCY,
+           i.InvPYTD,
+           i.InvPY,
+           i.InvP2TD,
+           i.InvP2
+    FROM Customers c
+             LEFT JOIN Invoices i ON i.CustomerCode = c.CustomerCode
+             LEFT JOIN OpenOrders o ON o.CustomerCode = c.CustomerCode
+    WHERE (i.InvCY IS NOT NULL OR o.OpenTotal IS NOT NULL)
 `;
+
 
 export async function loadManagedCustomers({
                                                SalespersonDivisionNo,
                                                SalespersonNo,
                                                maxDate,
-                                               minDate,
-                                               groupByCustomer
-                                           }: LoadRepPaceProps): Promise<CustomerRow[]> {
+                                               minDate
+                                           }: LoadRepPaceProps): Promise<CustomerPaceRecord[]> {
     try {
         debug('loadManagedCustomers()', SalespersonDivisionNo, SalespersonNo);
-        const [repCustomers] = await mysql2Pool.query<(CustomerRow & RowDataPacket)[]>(managedCustomersSQL, {
+        const [repCustomers] = await mysql2Pool.query<CustomerPaceRow[]>(sqlManagedCustomers, {
             SalespersonDivisionNo,
             SalespersonNo,
             minDate,
             maxDate,
-            groupByCustomer
         });
-        // return repCustomers;
         return repCustomers.map(row => {
-            const rate = calcGrowthRate(row.InvCYTD, row.InvPYTD);
-            const _rate = new Decimal(row.InvPYTD).eq(0)
-                ? (new Decimal(row.InvCYTD).lte(0) ? 0 : 1)
-                : (new Decimal(row.InvCYTD).sub(row.InvPYTD).div(row.InvPYTD).toDecimalPlaces(4).toString());
-            const pace = new Decimal(row.InvPY).eq(0)
-                ? new Decimal(row.InvCYTD).add(row.OpenOrders).toDecimalPlaces(4).toString()
-                : calcPace(row.InvPY, rate).toDecimalPlaces(4).toString(); //new Decimal(rate).add(1).times(row.InvPY).toDecimalPlaces(4).toString()
             return {
-                ...row,
-                rate: rate.toDecimalPlaces(4).toString(),
-                pace
+                CustomerCode: row.CustomerCode,
+                CustomerName: row.CustomerName,
+                EmailAddress: row.EmailAddress,
+                totals: customerTotals(row)
             }
-        })
+        });
     } catch (err: unknown) {
         if (err instanceof Error) {
             debug("loadManagedCustomers()", err.message);

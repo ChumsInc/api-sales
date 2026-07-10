@@ -4,7 +4,17 @@ import type {LoadRepPaceProps, LoadRepProps, RepPace, RepTotal, SalespersonRow} 
 import type {RowDataPacket} from "mysql2";
 import {Decimal} from "decimal.js";
 import {loadManagedCustomers} from "./rep-customers.js";
-export const REP_TOTAL:RepTotal = {OpenOrders: '0', InvCYTD: '0', InvPYTD: '0', InvPY: '0', InvP2TD: '0', InvP2: '0', rate: '0', pace: '0'};
+
+export const REP_TOTAL: RepTotal = {
+    OpenOrders: '0',
+    InvCYTD: '0',
+    InvPYTD: '0',
+    InvPY: '0',
+    InvP2TD: '0',
+    InvP2: '0',
+    rate: '0',
+    pace: '0'
+};
 
 const debug = Debug('chums:lib:rep:pace:reps');
 
@@ -178,9 +188,10 @@ const availableRepsSQL = `
 
 
 export async function loadRepInfo({
-                               SalespersonDivisionNo,
-                               SalespersonNo
-                           }: LoadRepProps): Promise<SalespersonRow | null> {
+                                      SalespersonDivisionNo,
+                                      SalespersonNo,
+                                      userid,
+                                  }: LoadRepProps): Promise<SalespersonRow | null> {
     try {
         const [rows] = await mysql2Pool.query<(SalespersonRow & RowDataPacket)[]>(repInfoSQL, {
             SalespersonDivisionNo,
@@ -189,7 +200,7 @@ export async function loadRepInfo({
         if (rows[0]) {
             const rep = rows[0];
             rep.Active = !!rep.Active;
-            rep.manager = await loadRepManagers({...rep});
+            rep.manager = await loadRepManagers({...rep, userid});
             rep.total = {...REP_TOTAL};
             return rep;
         }
@@ -223,9 +234,10 @@ export async function loadUserReps(userid: number): Promise<SalespersonRow[]> {
 }
 
 export async function loadRepManagers({
-                                   SalespersonDivisionNo,
-                                   SalespersonNo
-                               }: LoadRepProps): Promise<SalespersonRow | null> {
+                                          SalespersonDivisionNo,
+                                          SalespersonNo,
+                                          userid
+                                      }: LoadRepProps): Promise<SalespersonRow | null> {
     try {
         const [rows] = await mysql2Pool.query<(SalespersonRow & RowDataPacket)[]>(repManagerSQL, {
             SalespersonDivisionNo,
@@ -236,7 +248,7 @@ export async function loadRepManagers({
         }
         const rep = rows[0];
         rep.Active = !!rep.Active;
-        rep.manager = await loadRepManagers({...rep})
+        rep.manager = await loadRepManagers({...rep, userid})
         return rep;
     } catch (err: unknown) {
         if (err instanceof Error) {
@@ -302,7 +314,7 @@ export async function loadRepPace({
                                       groupByCustomer = false
                                   }: LoadRepPaceProps): Promise<RepPace | null> {
     try {
-        let rep = await loadRepInfo({SalespersonDivisionNo, SalespersonNo});
+        let rep = await loadRepInfo({SalespersonDivisionNo, SalespersonNo, userid});
         // let pace: RepPace;
         if (!rep) {
             const user = await loadUserRep(userid);
@@ -311,7 +323,7 @@ export async function loadRepPace({
             }
             SalespersonDivisionNo = user.SalespersonDivisionNo;
             SalespersonNo = user.SalespersonNo;
-            rep = await loadRepInfo({SalespersonDivisionNo, SalespersonNo});
+            rep = await loadRepInfo({SalespersonDivisionNo, SalespersonNo, userid});
         }
         if (!rep) {
             return null;
@@ -323,7 +335,8 @@ export async function loadRepPace({
             SalespersonNo,
             minDate,
             maxDate,
-            groupByCustomer
+            groupByCustomer,
+            userid
         });
 
         repCustomers.forEach(row => {
@@ -355,7 +368,7 @@ export async function loadRepPace({
 
         debug('loadRepPace()', rep.total);
         return {userid, rep, repSubReps, repCustomers};
-    } catch(err:unknown) {
+    } catch (err: unknown) {
         if (err instanceof Error) {
             debug("loadRepPace()", err.message);
             return Promise.reject(err);

@@ -77,6 +77,8 @@ import {postRenumberCustomer} from "./utils/renumber-customer/index.js";
 import {downloadVBGMonthlyInvoices, renderVBGMonthlyInvoices} from "./monthly-sales/vbg-monthly-sales.js";
 import {getSalesAnalysis} from "./analysis/index.js";
 import {getHistoryGraphTotals} from "./sales-history/method-handlers.js";
+import {getRepPaceV3} from "./rep/pace/rep-data.js";
+import {getRepListV3} from "./rep/pace/rep-list.js";
 
 const debug = Debug('chums:lib');
 const router = Router();
@@ -216,6 +218,8 @@ router.get('/rep/managers/:Company/:SalespersonDivisionNo-:SalespersonNo', getRe
 router.get('/rep/managers/:Company', getRepManagers);
 
 
+router.get('/rep/pace/v3/rep-totals.json', getRepPaceV3);
+router.get('/rep/pace/v3/rep-list.json', getRepListV3);
 router.get('/rep/pace/:Company/:SalespersonDivisionNo-:SalespersonNo/:minDate/:maxDate', getRepPace);
 router.get('/rep/pace/:Company/:SalespersonDivisionNo-:SalespersonNo/:minDate/:maxDate/xlsx', getRepPaceXLSX);
 router.get('/rep/pace/:Company/:minDate/:maxDate', getRepPace);
