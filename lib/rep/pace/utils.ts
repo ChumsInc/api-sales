@@ -1,7 +1,7 @@
 import Debug from "debug";
 import {Decimal} from "decimal.js";
 import type {
-    CustomerPaceTotals, RawCustomerPaceTotals,
+    CustomerPaceTotals, ParsedRepSlug, RawCustomerPaceTotals,
     RawRepPaceTotals,
     RepPaceRecord,
     RepPaceRollup,
@@ -35,9 +35,9 @@ export function salesManagerKey(row: RepPaceRow): string|null {
     return `${row.SalesManagerDivisionNo ?? ''}-${row.SalesManagerNo ?? ''}`
 }
 
-function injectPace(arg:RawCustomerPaceTotals):CustomerPaceTotals;
-function injectPace(arg:RawRepPaceTotals):RepPaceTotals;
-function injectPace(arg: RawRepPaceTotals|RawCustomerPaceTotals):RepPaceTotals|CustomerPaceTotals {
+export function injectPace(arg:RawCustomerPaceTotals):CustomerPaceTotals;
+export function injectPace(arg:RawRepPaceTotals):RepPaceTotals;
+export function injectPace(arg: RawRepPaceTotals|RawCustomerPaceTotals):RepPaceTotals|CustomerPaceTotals {
     const rate = calcGrowthRate(arg.InvCYTD ?? 0, arg.InvPYTD ?? 0);
     const pace = new Decimal(arg.InvPY ?? 0).eq(0)
         ? new Decimal(arg.InvCYTD ?? 0).add(arg.OpenTotal ?? 0)
@@ -60,6 +60,7 @@ export function customerTotals(row:RawCustomerPaceTotals):CustomerPaceTotals {
         InvP2: new Decimal(row.InvP2 ?? 0).toString(),
     })
 }
+
 export function addTotals(totals: RepPaceTotals | null, row: RawRepPaceTotals): RepPaceTotals {
     if (!totals) {
         return injectPace({
@@ -86,7 +87,6 @@ export function addTotals(totals: RepPaceTotals | null, row: RawRepPaceTotals): 
 }
 
 function rollupTotals(data:RepPaceRollup):RepPaceRollup {
-    // debug('rollupTotals()', data.SalesManager, data.Salesperson, Object.keys(data.subReps ?? {}).length);
     if (!data.subReps) {
         return {
             ...data,
@@ -94,18 +94,14 @@ function rollupTotals(data:RepPaceRollup):RepPaceRollup {
         };
     }
     const totals:RepPaceTotals[] = [];
-    debug('rollupTotals()',Object.keys(data.subReps).length, data.SalesManagerCode, data.SalespersonCode);
     Object.values(data.subReps).forEach(subRep => {
         const rollup = rollupTotals(subRep);
-        // debug('rollupTotals()', Object.keys(data.subReps!), rollup.);
         data.subReps![rollup.SalespersonCode] = rollup;
         totals.push(addTotals(rollup.subRepTotals, rollup.totals))
     })
     const reducedTotals = totals.reduce((pv:RepPaceTotals|null, cv:RepPaceTotals) => {
         return addTotals(pv, cv);
     }, null);
-
-    // debug('rollupTotals()', data.SalesManager, data.Salesperson, reducedTotals!.InvCYTD);
 
     return {
         ...data,
@@ -131,7 +127,6 @@ export function rollupRepPace(rows: RepPaceRecord[]): RepPaceRollup[] {
         .forEach(row => {
             const parentKey = row.SalesManagerCode;
             const repKey = row.SalespersonCode;
-            // debug('rollupRepPace()', parentKey, repKey);
             if (parentKey && parentKey in data) {
                 if (!data[parentKey].subReps) {
                     data[parentKey].subReps = {};
@@ -141,3 +136,24 @@ export function rollupRepPace(rows: RepPaceRecord[]): RepPaceRollup[] {
         })
     return Object.values(data).filter(row => row.Level === 0).map(row => rollupTotals(row));
 }
+
+export function parseRepSlug(arg:string):ParsedRepSlug {
+    const [salespersonDivisionNo, salespersonNo] = /[01][0-9]-\w+/.test(arg) ? arg.split('-') : [undefined, undefined];
+    return {
+        salespersonDivisionNo,
+        salespersonNo
+    }
+}
+
+export const zeroRepTotals: RepPaceTotals = {
+    OpenTotal: '0',
+    InvCYTD: '0',
+    InvCY: '0',
+    InvPYTD: '0',
+    InvPY: '0',
+    InvP2TD: '0',
+    InvP2: '0',
+    rate: '0',
+    pace: '0',
+    count: '0'
+};

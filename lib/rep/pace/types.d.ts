@@ -10,14 +10,15 @@ export interface SalespersonRow {
     total: RepTotal;
 }
 export interface RepPaceFields {
-    OpenOrders: string|number;
-    InvCYTD: string|number;
-    InvPYTD: string|number;
-    InvPY: string|number;
-    InvP2TD: string|number;
-    InvP2: string|number;
-    rate: string|number;
-    pace: string|number;
+    OpenTotal: number;
+    InvCYTD: number;
+    InvCY: number;
+    InvPYTD: number;
+    InvPY: number;
+    InvP2TD: number;
+    InvP2: number;
+    rate: number;
+    pace: number;
 }
 
 export interface CustomerRow extends RepPaceFields {
@@ -48,7 +49,7 @@ export interface RepPace {
     repCustomers: CustomerRow[];
 }
 
-export type ExcelRepRow  = RepTotal & {
+export type ExcelRepRow  = RepPaceFields & {
     Salesperson: string;
     SalespersonName: string;
     EmailAddress?: string;
@@ -133,3 +134,8 @@ export interface CustomerPaceRecord {
     totals: CustomerPaceTotals;
 }
 export type CustomerPaceRow = Omit<CustomerPaceRecord, 'totals'> & RawCustomerPaceTotals & RowDataPacket;
+
+export interface ParsedRepSlug {
+    salespersonDivisionNo?: string;
+    salespersonNo?: string;
+}

@@ -1,7 +1,8 @@
 import type {CustomerPaceRecord, CustomerPaceRow, LoadRepPaceProps} from "./types.js";
-import {mysql2Pool} from "chums-local-modules";
+import {mysql2Pool, type ValidatedUser} from "chums-local-modules";
 import Debug from "debug";
-import {customerTotals} from "./utils.js";
+import {customerTotals, parseRepSlug} from "./utils.js";
+import type {Request, Response} from "express";
 
 const debug = Debug('chums:lib:rep:pace:rep-customers');
 
@@ -75,7 +76,8 @@ const sqlManagedCustomers = `
                                                                st.SalespersonNo = r.SalespersonNo
                       WHERE c.CustomerStatus = 'A'
                         AND NOT (c.SalespersonDivisionNo = st.SalespersonDivisionNo AND
-                                 c.SalespersonNo = st.SalespersonNo)),
+                                 c.SalespersonNo = st.SalespersonNo)
+                      ORDER BY CustomerCode),
         Invoices AS (SELECT c.CustomerCode,
                             SUM(
                                     IF(ih.InvoiceDate BETWEEN d.cyFrom AND d.cyTo,
@@ -119,7 +121,7 @@ const sqlManagedCustomers = `
                                          ON ih.ARDivisionNo = c.ARDivisionNo AND ih.CustomerNo = c.CustomerNo AND
                                             IFNULL(ih.ShipToCode, '') LIKE IFNULL(c.ShipToCode, '%')
                      WHERE ih.InvoiceType <> 'XD'
-                       AND ih.InvoiceDate BETWEEN d.p2Start AND d.cyTo
+                       AND ih.InvoiceDate BETWEEN d.p2Start AND d.cyEnd
                      GROUP BY c.CustomerCode),
         OpenOrders AS (SELECT c.CustomerCode,
                               SUM(oh.TaxableAmt + oh.NonTaxableAmt - oh.DiscountAmt - oh.InvoicedAmt) AS OpenTotal
@@ -145,23 +147,17 @@ const sqlManagedCustomers = `
     FROM Customers c
              LEFT JOIN Invoices i ON i.CustomerCode = c.CustomerCode
              LEFT JOIN OpenOrders o ON o.CustomerCode = c.CustomerCode
-    WHERE (i.InvCY IS NOT NULL OR o.OpenTotal IS NOT NULL)
 `;
 
 
-export async function loadManagedCustomers({
-                                               SalespersonDivisionNo,
-                                               SalespersonNo,
-                                               maxDate,
-                                               minDate
-                                           }: LoadRepPaceProps): Promise<CustomerPaceRecord[]> {
+export async function loadManagedCustomers(arg: LoadRepPaceProps): Promise<CustomerPaceRecord[]> {
     try {
-        debug('loadManagedCustomers()', SalespersonDivisionNo, SalespersonNo);
         const [repCustomers] = await mysql2Pool.query<CustomerPaceRow[]>(sqlManagedCustomers, {
-            SalespersonDivisionNo,
-            SalespersonNo,
-            minDate,
-            maxDate,
+            userId: arg.userid,
+            salespersonDivisionNo: arg.SalespersonDivisionNo ?? null,
+            salespersonNo: arg.SalespersonNo ?? null,
+            fromDate: arg.minDate,
+            toDate: arg.maxDate,
         });
         return repCustomers.map(row => {
             return {
@@ -178,5 +174,26 @@ export async function loadManagedCustomers({
         }
         debug("loadManagedCustomers()", err);
         return Promise.reject(new Error('Error in loadManagedCustomers()'));
+    }
+}
+
+export async function getManagedCustomers(req: Request, res: Response<unknown, ValidatedUser>): Promise<void> {
+    try {
+        const {salespersonDivisionNo, salespersonNo} = parseRepSlug(req.query.rep as string ?? '');
+        const customers = await loadManagedCustomers({
+            userid: res.locals.profile.user.id,
+            SalespersonDivisionNo: salespersonDivisionNo ?? null,
+            SalespersonNo: salespersonNo ?? null,
+            minDate: req.query.minDate as string,
+            maxDate: req.query.maxDate as string,
+        })
+        res.json(customers);
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            debug("getManagedCustomers()", err.message);
+            res.status(500).json({error: err.message, name: err.name});
+            return;
+        }
+        res.status(500).json({error: 'unknown error in getManagedCustomers'});
     }
 }

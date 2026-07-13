@@ -2,7 +2,7 @@ import type {LoadRepPaceProps, RepPaceRecord, RepPaceRow} from "./types.js";
 import Debug from "debug";
 import dayjs from "dayjs";
 import {mysql2Pool, type ValidatedUser} from "chums-local-modules";
-import {addTotals, rollupRepPace, salesManagerKey, salespersonKey} from "./utils.js";
+import {addTotals, parseRepSlug, rollupRepPace} from "./utils.js";
 import type {Request, Response} from "express";
 
 const debug = Debug('chums:lib:rep:pace:rep-data');
@@ -188,31 +188,19 @@ const sqlEmployee = `
                        ON r.SalespersonCode = i.SalespersonCode
              LEFT JOIN OpenOrders o
                        ON r.SalespersonCode = o.SalespersonCode
-    WHERE IFNULL(c.count, 0) > 0
     ORDER BY r.Level, r.SalesManagerCode, r.SalespersonCode
 `
 
 export async function loadRepPaceV3(props: LoadRepPaceProps): Promise<RepPaceRecord[]> {
     try {
-        const asOfDate = dayjs(props.maxDate);
-        const startDate = dayjs(props.minDate).startOf('year');
-        const endDate = dayjs(asOfDate).endOf('year');
         const params = {
             userId: props.userid,
             topDivisionNo: props.SalespersonDivisionNo,
             topSalespersonNo: props.SalespersonNo,
-            cyMin: startDate.format('YYYY-MM-DD'),
-            today: asOfDate.format('YYYY-MM-DD'),
-            pyMin: startDate.subtract(1, 'year').format('YYYY-MM-DD'),
-            pyDate: asOfDate.subtract(1, 'year').format('YYYY-MM-DD'),
-            pyMax: endDate.subtract(1, 'year').format('YYYY-MM-DD'),
-            p2Min: startDate.subtract(2, 'year').format('YYYY-MM-DD'),
-            p2Date: asOfDate.subtract(2, 'year').format('YYYY-MM-DD'),
-            p2Max: endDate.subtract(2, 'year').format('YYYY-MM-DD'),
+            fromDate: props.minDate,
+            toDate: props.maxDate,
         }
-        // debug('loadRepPaceV3()', params);
         const [rows] = await mysql2Pool.query<RepPaceRow[]>(sqlEmployee, params);
-        // debug('loadRepPaceV3()', rows.length);
         return rows.map(row => {
             return {
                 SalesManagerCode: row.SalesManagerCode,
@@ -234,8 +222,7 @@ export async function loadRepPaceV3(props: LoadRepPaceProps): Promise<RepPaceRec
 
 export async function getRepPaceV3(req: Request, res: Response<unknown, ValidatedUser>) {
     try {
-        const rep = req.query.rep as string ?? '';
-        const [salespersonDivisionNo, salespersonNo] = /0[1-9]-\w+/.test(rep) ? rep.split('-') : [undefined, undefined];
+        const {salespersonDivisionNo, salespersonNo} = parseRepSlug(req.query.rep as string ?? '');
         const data = await loadRepPaceV3({
             userid: res.locals.profile.user.id,
             SalespersonDivisionNo: salespersonDivisionNo ?? null,
