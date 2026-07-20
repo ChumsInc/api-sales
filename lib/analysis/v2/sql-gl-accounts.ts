@@ -12,4 +12,5 @@ export const sqlGLAccounts = `
         (REPLACE(Account, '-', '') LIKE IFNULL(:SalesAccount, '') OR Account LIKE IFNULL(:SalesAccount, ''))
             OR (REPLACE(Account, '-', '') LIKE IFNULL(:CostAccount, '') OR Account LIKE IFNULL(:CostAccount, ''))
         );
+
 `;
