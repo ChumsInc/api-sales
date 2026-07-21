@@ -47,8 +47,8 @@ export interface ShipToRepAuditResponse extends BillToCustomer {
 }
 
 export interface ShipToAuditRow {
-    Customer: Json<BillToCustomerWithDate>;
-    ShipToAddress: Json<ShipToAddressWithDate>;
+    Customer: BillToCustomerWithDate;
+    ShipToAddress: ShipToAddressWithDate;
 }
 
 export interface ShipToRepAuditOptions {
@@ -123,8 +123,8 @@ async function loadShipToAudit(options: ShipToRepAuditOptions): Promise<ShipToRe
         }
         const [rows] = await mysql2Pool.query<(RowDataPacket & ShipToAuditRow)[]>(sql, params);
         return rows.map(row => {
-            const customer = JSON.parse(row.Customer) as BillToCustomerWithDate;
-            const shipToAddress = JSON.parse(row.ShipToAddress) as ShipToAddressWithDate;
+            const customer = row.Customer as BillToCustomerWithDate;
+            const shipToAddress = row.ShipToAddress as ShipToAddressWithDate;
             return {
                 ...customer,
                 updated: sageDateToString(customer.updated),

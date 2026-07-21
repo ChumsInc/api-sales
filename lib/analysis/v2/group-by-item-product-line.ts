@@ -1,7 +1,7 @@
 import {SAParams, SAProductLineRow, SAQueryResult, SARow} from "../sa-types.js";
 import {Connection, getConnection, parseSQL} from "chums-local-modules";
 import Debug from "debug";
-import {QueryValues} from "mysql2";
+import type {QueryValues} from "mysql2";
 import {sqlCustomers} from "./sql-customers.js";
 import {sqlItems} from "./sql-items.js";
 import {sqlGLAccounts} from "./sql-gl-accounts.js";
@@ -227,10 +227,10 @@ export async function loadProductLineResults(params: SAParams, skipExec?: boolea
         return {rows, query}
     } catch (err: unknown) {
         if (err instanceof Error) {
-            console.debug("loadProductLineResults()", err.message);
+            debug("loadProductLineResults()", err.message);
             return {error: err.message, query, rows: []}
         }
-        console.debug("loadProductLineResults()", err);
+        debug("loadProductLineResults()", err);
         return {error: 'Unknown error in loadProductLineResults', query, rows: []}
     }
 }

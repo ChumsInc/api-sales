@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import {RowDataPacket} from "mysql2";
+import type {QueryValues, RowDataPacket} from "mysql2";
 import {mysql2Pool} from "chums-local-modules";
 import type {Request, Response} from 'express'
 import dayjs from "dayjs";
@@ -86,14 +86,8 @@ async function loadOrderHistory(params: LoadOrderHistoryParams): Promise<B2BHist
                          ((IFNULL(:minDate, '') = '' OR sohh.PromotedDate >= :minDate) AND
                           (IFNULL(:maxDate, '') = '' OR sohh.PromotedDate <= :maxDate))
                          )`;
-        const [rows] = await mysql2Pool.query<B2BOrderRow[]>(sql, params);
-        return rows.map(row => {
-            return {
-                ...row,
-                users: JSON.parse(row.users ?? '[]'),
-                userActions: JSON.parse(row.userActions ?? '[]')
-            }
-        })
+        const [rows] = await mysql2Pool.query<(B2BHistoryOrder & RowDataPacket)[]>(sql, params as unknown as QueryValues);
+        return rows;
     } catch (err: unknown) {
         if (err instanceof Error) {
             debug("loadOrderHistory()", err.message);
