@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import {Router} from 'express';
 import type {ValidatedUserProfile} from 'chums-types'
-import {deprecationNotice, logPath, validateRole, validateUser} from 'chums-local-modules';
+import {deprecationNotice, logAPIUsageMiddleware, logPath, validateRole, validateUser} from 'chums-local-modules';
 import {getSalesByBillToState, getSalesByShipToState} from './sales-map/index.js';
 import {getHistoryGraphData} from './sales-history/index.js';
 import {getAccountList, renderAccountList, renderAccountListXLSX} from "./account-list/bill-to.js";
@@ -21,7 +21,7 @@ import {getRepItemHistory} from './rep/rep-item-history.js';
 import {getCondensedRepList, getRepList, getUserRepList} from './rep/rep-list.js';
 import {getRepManagers, getRepPace, getRepPace_v2} from './rep/rep-pace.js'
 import {getRepPaceXLSX, getRepPaceXLSX_v2} from './rep/rep-pace-xlsx.js';
-import {getOpenRepOrders, getRepAccounts, getRepTotals, getRepOrders} from './rep/account-list/request-handlers.js';
+import {getOpenRepOrders, getRepAccounts, getRepOrders, getRepTotals} from './rep/account-list/request-handlers.js';
 import {getRepAccountsXLSX} from './rep/account-list/excel-handlers.js';
 import {execGDPRRequest, execGDPRSORequest, getGDPRSORequest} from './gdpr/index.js'
 
@@ -98,6 +98,7 @@ declare global {
 
 router.use(validateUser);
 router.use(logPath(debug));
+router.use(logAPIUsageMiddleware('api-sales'));
 
 router.get('/about.json', aboutAPI);
 
