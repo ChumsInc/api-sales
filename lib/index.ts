@@ -81,6 +81,8 @@ import {getRepPaceV3} from "./rep/pace/rep-data.js";
 import {getRepListV3} from "./rep/pace/rep-list.js";
 import {getManagedCustomers} from "./rep/pace/rep-customers.js";
 import {getRepPaceXLSXV3} from "./rep/pace/excel-handler.js";
+import {getCustomizedOrder, getCustomizedOrderList} from "./audits/customization-order/index.js";
+import {getStoresForWeb} from "./sales-map/store-map.js";
 
 const debug = Debug('chums:lib');
 const router = Router();
@@ -166,6 +168,9 @@ router.get('/invoices/:Company/:ARDivisionNo-:CustomerNo', getAccountInvoices);
 router.get('/monthly-sales/vbg-monthly-sales.html', renderVBGMonthlyInvoices);
 router.get('/monthly-sales/vbg-monthly-sales/download.csv', downloadVBGMonthlyInvoices);
 
+router.get('/orders/customized/list.json', getCustomizedOrderList);
+router.get('/orders/customized/:salesOrderNo.json', getCustomizedOrder);
+
 router.get('/orders/items/:company/:ARDivisionNo-:CustomerNo', getOpenItems);
 router.get('/orders/margins.json', getOrderMargins);
 router.get('/orders/margins.html', renderOrderMargins);
@@ -238,6 +243,8 @@ router.get('/rep/:company/:salespersonDivisionNo-:salespersonNo/:minDate/:maxDat
 
 router.get('/sales-map/:year', validateRole('sales'), getSalesByBillToState);
 router.get('/sales-map/:year/shipToState', validateRole('sales'), getSalesByShipToState);
+
+router.get('/store-map.json', getStoresForWeb);
 
 router.get('/validate/customer/ship-to-rep.json', getCustomerShipToAudit);
 router.get('/validate/customer/ship-to-rep.html', renderCustomerShipToAudit);
