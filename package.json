@@ -31,7 +31,7 @@
     "dayjs": "^1.11.7",
     "debug": "^4.3.1",
     "decimal.js": "^10.4.3",
-    "dotenv": "^17.2.0",
+    "dotenv": "^18.0.0",
     "express": "^5.2.1",
     "helmet": "^8.0.0",
     "mysql2": "^3.2.0",
@@ -45,7 +45,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@tsconfig/node18": "^18.2.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/debug": "^4.1.12",
     "@types/express": "^5.0.6",

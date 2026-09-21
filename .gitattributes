@@ -1,1 +1,15 @@
-eol="lf"
+# Handle line endings automatically for all text files
+* text=auto
+
+# Explicitly declare text files to always use LF on checkout
+# (Ideal for scripts, configuration, and source code)
+*.sh text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.ts text eol=lf
+
+# Denote files that might be mistakenly treated as text as binary
+*.png binary
+*.jpg binary
+*.gif binary
