@@ -1,6 +1,6 @@
 import {mysql2Pool} from "chums-local-modules";
 import Debug from "debug";
-import type {RepMismatchRecord} from "./types.js";
+import type {RepMismatchRecord, RepMismatchRow} from "./types.js";
 
 const debug = Debug('chums:lib:audits:sales-order:rep-mismatch:load-orders');
 
