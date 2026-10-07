@@ -98,7 +98,8 @@ const queryOrders = `
                        ON s.Company = soh.Company AND s.CancelReasonCode = soh.CancelReasonCode
     WHERE soh.OrderType IN ('M')
       AND soh.Company = 'chums'
-      AND IF(IFNULL(:dateType, '') = 'od', soh.OrderDate BETWEEN :minDate AND :maxDate,
+      AND IF(IFNULL(:dateType, '') = 'od', 
+             soh.OrderDate BETWEEN :minDate AND :maxDate,
              soh.ShipExpireDate BETWEEN :minDate AND :maxDate)
       AND (IFNULL(:filterDivision, '') = '' OR soh.ARDivisionNo = :filterDivision)
       AND (IFNULL(:filterRep, '') = '' OR soh.SalespersonNo = :filterRep)
@@ -145,9 +146,9 @@ async function loadOrdersByPeriod(props: loadOrdersByPeriodProps): Promise<Order
 export async function getOrdersByPeriod(req: Request, res: Response) {
     try {
         const params: loadOrdersByPeriodProps = {
-            dateType: req.params.dateType ?? req.query.dateType as string ?? null,
-            minDate: req.params.minDate ?? req.query.minDate as string ?? dayjs().startOf('week').format('YYYY-MM-DD'),
-            maxDate: req.params.maxDate ?? req.query.maxDate as string ?? dayjs().endOf('week').format('YYYY-MM-DD'),
+            dateType: req.params.dateType as string ?? req.query.dateType as string ?? null,
+            minDate: req.params.minDate as string ?? req.query.minDate as string ?? dayjs().startOf('week').format('YYYY-MM-DD'),
+            maxDate: req.params.maxDate as string ?? req.query.maxDate as string ?? dayjs().endOf('week').format('YYYY-MM-DD'),
             filterDivision: req.query.filterDivision as string ?? null,
             filterRep: req.query.filterRep as string ?? null,
         }
