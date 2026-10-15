@@ -55,7 +55,7 @@ import {
     postPriceLevel,
     postPriceLevelSort
 } from "./pricing/index.js";
-import {default as paceRouter} from './pace/index.js';
+import {getPaceByCustomer, getPaceByDivision, getPaceBySegment} from './pace/index.js';
 import {getCensusAudit, getCensusAuditXLSX} from "./audits/census-audit.js";
 import {getCustomersByType, getCustomerTypes} from "./customer-types/index.js";
 import {
@@ -78,8 +78,10 @@ import {downloadVBGMonthlyInvoices, renderVBGMonthlyInvoices} from "./monthly-sa
 import {getSalesAnalysis} from "./analysis/index.js";
 import {getHistoryGraphTotals} from "./sales-history/method-handlers.js";
 import {getRepPaceV3} from "./rep/pace/rep-data.js";
+import {getRepPaceV4} from "./rep/pace/rep-data-v4.js";
 import {getRepListV3} from "./rep/pace/rep-list.js";
 import {getManagedCustomers} from "./rep/pace/rep-customers.js";
+import {getAssignedCustomersV4} from "./rep/pace/rep-customers-v4.js";
 import {getRepPaceXLSXV3} from "./rep/pace/excel-handler.js";
 import {getCustomizedOrder, getCustomizedOrderList} from "./audits/customization-order/index.js";
 import {getStoresForWeb} from "./sales-map/store-map.js";
@@ -187,8 +189,9 @@ router.get('/orders/by-period.json', getOrdersByPeriod);
 router.get('/orders/:salesOrderNo.json', getSalesOrder);
 router.get('/orders/:company/:salesOrderNo', getSalesOrder);
 
-router.use('/pace', paceRouter);
-
+router.get('/pace/chums.json', getPaceByDivision);
+router.get('/pace/:ARDivisionNo/customer.json', getPaceByCustomer);
+router.get('/pace/:ARDivisionNo/segment.json', getPaceBySegment);
 
 router.get('/pricing/:Company/pricelevels/:CustomerPriceLevel', validateRole(['cost']), getPriceLevel);
 router.get('/pricing/:Company/pricelevels', validateRole(['cost']), getPriceLevels);
@@ -227,8 +230,10 @@ router.get('/rep/managers/:Company', getRepManagers);
 
 
 router.get('/rep/pace/v3/rep-totals.json', getRepPaceV3);
+router.get('/rep/pace/v4/rep-totals.json', getRepPaceV4);
 router.get('/rep/pace/v3/rep-list.json', getRepListV3);
 router.get('/rep/pace/v3/customers.json', getManagedCustomers);
+router.get('/rep/pace/v4/customers.json', getAssignedCustomersV4);
 router.get('/rep/pace/v3/rep-pace.xlsx', getRepPaceXLSXV3);
 router.get('/rep/pace/:Company/:SalespersonDivisionNo-:SalespersonNo/:minDate/:maxDate', getRepPace);
 router.get('/rep/pace/:Company/:SalespersonDivisionNo-:SalespersonNo/:minDate/:maxDate/xlsx', getRepPaceXLSX);

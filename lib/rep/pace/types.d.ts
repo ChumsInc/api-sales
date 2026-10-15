@@ -135,6 +135,12 @@ export interface CustomerPaceRecord {
 }
 export type CustomerPaceRow = Omit<CustomerPaceRecord, 'totals'> & RawCustomerPaceTotals & RowDataPacket;
 
+export interface CustomerPaceRecordV4 extends CustomerPaceRecord {
+    BillTo: number|null;
+    ShipTo: number|null;
+}
+export type CustomerPaceRowV4 = Omit<CustomerPaceRecordV4, 'totals'> & RawCustomerPaceTotals & RowDataPacket;
+
 export interface ParsedRepSlug {
     salespersonDivisionNo?: string;
     salespersonNo?: string;
