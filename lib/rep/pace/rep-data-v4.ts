@@ -11,7 +11,7 @@ const sql = `
     DROP TEMPORARY TABLE IF EXISTS _DistinctUserReps;
     CREATE TEMPORARY TABLE _DistinctUserReps LIKE c2.TEMP_RP_DistinctUserReps;
 
-    INSERT INTO _DistinctUserReps
+    INSERT IGNORE INTO _DistinctUserReps
     WITH RECURSIVE
         IsEmployee AS (SELECT 1 AS IsEmployee
                        FROM users.users
